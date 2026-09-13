@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>青云路 · 公务员晋升模拟（R2）</title>
+<style>
+/* ============ 青云路 R2 Demo 样式：干净政务风 ============ */
+* { margin:0; padding:0; box-sizing:border-box; }
+:root{
+  --bg:#F6F3EC; --card:#FFFFFF; --line:#E6E0D4;
+  --red:#A3272C; --red-deep:#7E1D22; --ink:#2B2B2B; --sub:#6B6B6B; --faint:#9A9488;
+  --green:#3E7B5A; --amber:#A87B2E; --blue:#33567D;
+  --radius:8px;
+}
+html,body{height:100%;}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  background:var(--bg); color:var(--ink); font-size:14px; line-height:1.6;
+}
+#app{max-width:1120px; margin:0 auto; padding:18px 20px 40px;}
+
+header{display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:12px 20px; margin-bottom:14px;}
+.brand{display:flex; align-items:baseline; gap:10px;}
+.brand h1{font-size:19px; color:var(--red); letter-spacing:2px; font-weight:600;}
+.brand span{font-size:12px; color:var(--faint);}
+.post{text-align:right;}
+.post .post-name{font-size:15px; font-weight:600;}
+.post .post-meta{font-size:12px; color:var(--sub);}
+
+main{display:grid; grid-template-columns:318px 1fr; gap:14px; align-items:start;}
+@media (max-width:900px){ main{grid-template-columns:1fr;} }
+
+aside{display:flex; flex-direction:column; gap:12px;}
+.card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:13px 15px;}
+.card h3{font-size:12.5px; color:var(--red); font-weight:600; letter-spacing:1px; border-bottom:1px solid var(--line); padding-bottom:7px; margin-bottom:9px;}
+.person{display:flex; justify-content:space-between; font-size:12.5px; padding:1px 0;}
+.person b{font-weight:600;}
+
+.stat{margin-bottom:7px;}
+.stat .row{display:flex; justify-content:space-between; font-size:11.5px; color:var(--sub); margin-bottom:2px;}
+.stat .row b{color:var(--ink); font-weight:600;}
+.bar{height:6px; background:#EFEAE0; border-radius:4px; overflow:hidden;}
+.bar i{display:block; height:100%; border-radius:4px; background:var(--red); transition:width .35s ease;}
+.bar i.c-green{background:var(--green);} .bar i.c-amber{background:var(--amber);} .bar i.c-blue{background:var(--blue);}
+
+.promo-item{font-size:11.5px; color:var(--sub); margin-bottom:5px; display:flex; justify-content:space-between; gap:8px;}
+.promo-item b{color:var(--ink); font-weight:600;}
+.promo-item .ok{color:var(--green);} .promo-item .no{color:var(--red);}
+.promo-cta{margin-top:10px; width:100%; padding:8px 0; border:1px solid var(--red); background:var(--red); color:#fff; border-radius:6px; font-size:12.5px; cursor:pointer; letter-spacing:2px; font-weight:600;}
+.promo-cta:disabled{background:#E5DFD3; border-color:#D8D1C2; color:#9A9488; cursor:not-allowed;}
+
+/* 人脉 */
+.npc{display:flex; justify-content:space-between; align-items:center; font-size:11.5px; padding:4px 0; border-bottom:1px dashed #F0EBE0;}
+.npc:last-child{border-bottom:none;}
+.npc .n-info span{color:var(--sub);}
+.npc .n-fav{white-space:nowrap;}
+.npc .n-fav b.ok{color:var(--green);} .npc .n-fav b.warn{color:var(--amber);} .npc .n-fav b.bad{color:var(--red);}
+.faction-line{display:flex; justify-content:space-between; font-size:11.5px; padding:3px 0;}
+.faction-line b{color:var(--ink);}
+.faction-tag{display:inline-block; padding:1px 8px; border-radius:10px; font-size:11px; background:#FBF5F4; color:var(--red); border:1px solid #E8C9CA;}
+.faction-tag.mid{background:#F7F5EF; color:var(--sub); border-color:var(--line);}
+
+#center{display:flex; flex-direction:column; gap:12px;}
+.phase-tip{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:9px 15px; font-size:12.5px; color:var(--sub);}
+.phase-tip b{color:var(--red);}
+
+#actions{display:grid; grid-template-columns:repeat(2,1fr); gap:9px;}
+@media (max-width:600px){ #actions{grid-template-columns:1fr;} }
+.action{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:10px 13px; cursor:pointer; transition:border-color .15s, transform .1s;}
+.action:hover{border-color:var(--red);}
+.action:active{transform:scale(.99);}
+.action.disabled{opacity:.45; cursor:not-allowed;}
+.action.disabled:hover{border-color:var(--line);}
+.action .a-name{font-size:13px; font-weight:600; margin-bottom:2px;}
+.action .a-desc{font-size:11.5px; color:var(--sub); margin-bottom:4px;}
+.action .a-tags{font-size:11px; color:var(--faint);}
+.action .a-cost{float:right; font-size:11.5px; color:var(--red); font-weight:600;}
+
+#event-box{background:#FBF9F4; border:1px solid #D8C9A8; border-radius:var(--radius); padding:13px 15px;}
+#event-box .ev-title{font-size:13.5px; font-weight:600; color:var(--amber); margin-bottom:3px;}
+#event-box .ev-text{font-size:12.5px; color:var(--ink); margin-bottom:9px;}
+#event-box .ev-opt{display:block; width:100%; text-align:left; margin-top:6px; padding:8px 11px; background:var(--card); border:1px solid var(--line); border-radius:6px; cursor:pointer; font-size:12.5px;}
+#event-box .ev-opt:hover{border-color:var(--red);}
+#event-box .ev-opt small{color:var(--faint); display:block; margin-top:1px;}
+#event-box .ev-opt.danger{border-color:#E8C9CA; background:#FDF7F6;}
+#event-box .ev-opt.danger small{color:var(--red);}
+
+#result-box{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:15px;}
+#result-box .r-title{font-size:14.5px; font-weight:600; margin-bottom:8px;}
+#result-box .r-title.up{color:var(--red);} #result-box .r-title.flat{color:var(--ink);}
+.eval-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin-bottom:9px;}
+.eval-cell{background:#F8F5EE; border-radius:6px; padding:7px 5px; text-align:center;}
+.eval-cell .ev-label{font-size:10.5px; color:var(--sub);}
+.eval-cell .ev-score{font-size:16px; font-weight:600;}
+.result-line{font-size:12.5px; margin-bottom:5px;}
+.result-line b{color:var(--red);}
+.btn{display:inline-block; margin-top:9px; padding:8px 20px; background:var(--red); color:#fff; border:none; border-radius:6px; font-size:12.5px; cursor:pointer; letter-spacing:2px;}
+.btn.ghost{background:transparent; color:var(--red); border:1px solid var(--red);}
+
+/* 选岗 */
+.post-card{background:#FBF9F4; border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; margin-bottom:9px; cursor:pointer; transition:border-color .15s;}
+.post-card:hover{border-color:var(--red);}
+.post-card .pc-name{font-size:14px; font-weight:600; margin-bottom:2px;}
+.post-card .pc-focus{font-size:11.5px; color:var(--amber); margin-bottom:4px;}
+.post-card .pc-bonus{font-size:11.5px; color:var(--sub);}
+.post-card .pc-bonus b{color:var(--green);}
+
+#final-box{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; text-align:center;}
+#final-box h2{color:var(--red); font-size:20px; margin-bottom:8px; letter-spacing:3px;}
+#final-box p{color:var(--sub); font-size:13px; margin-bottom:5px;}
+#final-box .final-rank{font-size:26px; font-weight:700; margin:10px 0;}
+#final-box .exit-reason{background:#FDF7F6; border:1px solid #E8C9CA; border-radius:6px; padding:8px 12px; font-size:12.5px; color:var(--red); display:inline-block; margin-bottom:8px;}
+
+#log{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:9px 15px; max-height:150px; overflow-y:auto; margin-top:12px;}
+#log h3{font-size:11.5px; color:var(--faint); font-weight:600; letter-spacing:1px; margin-bottom:5px;}
+#log p{font-size:11.5px; color:var(--sub); padding:2px 0; border-bottom:1px dashed #F0EBE0;}
+#log p:last-child{border-bottom:none;}
+
+#start-box{max-width:480px; margin:36px auto; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:26px 30px;}
+#start-box h2{color:var(--red); text-align:center; font-size:22px; letter-spacing:4px; margin-bottom:4px;}
+#start-box .slogan{text-align:center; color:var(--faint); font-size:12px; margin-bottom:20px;}
+#start-box label{display:block; font-size:12.5px; color:var(--sub); margin-bottom:5px;}
+#start-box input{width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:6px; font-size:14px; margin-bottom:14px; font-family:inherit; background:#FBF9F4;}
+#start-box .cat-row{display:flex; gap:7px; margin-bottom:14px;}
+.cat-btn{flex:1; padding:9px 5px; text-align:center; border:1px solid var(--line); border-radius:6px; background:#FBF9F4; cursor:pointer; font-size:12.5px; color:var(--sub);}
+.cat-btn.sel{border-color:var(--red); color:var(--red); background:#FBF5F4; font-weight:600;}
+.cat-btn small{display:block; font-size:10.5px; color:var(--faint); margin-top:1px;}
+.edu-btn{flex:1; padding:8px 4px; text-align:center; border:1px solid var(--line); border-radius:6px; background:#FBF9F4; cursor:pointer; font-size:12px; color:var(--sub);}
+.edu-btn.sel{border-color:var(--green); color:var(--green); background:#F3F8F4; font-weight:600;}
+.edu-btn small{display:block; font-size:10px; color:var(--faint); margin-top:1px;}
+.post-row{display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px;}
+.post-btn{padding:7px 4px; text-align:center; border:1px solid var(--line); border-radius:6px; background:#FBF9F4; cursor:pointer; font-size:12px; color:var(--sub);}
+.post-btn.sel{border-color:var(--green); color:var(--green); background:#F3F8F4; font-weight:600;}
+.post-btn small{display:block; font-size:10px; color:var(--faint); margin-top:1px;}
+.fac-row{display:flex; gap:7px; margin-bottom:18px;}
+.fac-btn{flex:1; padding:8px 4px; text-align:center; border:1px solid var(--line); border-radius:6px; background:#FBF9F4; cursor:pointer; font-size:12px; color:var(--sub);}
+.fac-btn.sel{border-color:var(--blue); color:var(--blue); background:#F4F7FB; font-weight:600;}
+.fac-btn small{display:block; font-size:10px; color:var(--faint); margin-top:1px;}
+#start-box .btn{width:100%;}
+.hidden{display:none !important;}
+.small-note{font-size:11px;color:var(--faint);text-align:center;margin-top:11px;line-height:1.7;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 新档 -->
+  <div id="start-box">
+    <h2>青 云 路</h2>
+    <p class="slogan">公务员晋升模拟 · 单机试玩版（R2）</p>
+    <label>姓名</label>
+    <input id="inp-name" type="text" maxlength="8" value="青云" placeholder="输入姓名">
+    <label>入职方向（决定可选岗位类别：综合管理类不出执法/技术岗，行政执法类只出执法岗，专业技术类出技术岗）</label>
+    <div class="cat-row" id="cat-row">
+      <div class="cat-btn sel" data-cat="综合">综合管理<small>口碑起点高</small></div>
+      <div class="cat-btn" data-cat="行政">行政执法<small>政绩获取快 · 含民警/综合执法岗</small></div>
+      <div class="cat-btn" data-cat="专业">专业技术<small>学历起点高</small></div>
+    </div>
+    <label>学历背景（按《新录用公务员任职定级规定》定级：大专/本科定一级科员、硕士定四级主任科员、博士定二级主任科员——职务一律从基层办所干起）</label>
+    <div class="cat-row" id="edu-row">
+      <div class="edu-btn sel" data-edu="dazhuan">大专<small>一级科员（科员级）</small></div>
+      <div class="edu-btn" data-edu="benke">本科<small>一级科员（科员级）</small></div>
+      <div class="edu-btn" data-edu="shuoshi">硕士<small>四级主任科员（副科级待遇）</small></div>
+      <div class="edu-btn" data-edu="boshi">博士<small>二级主任科员（正科级待遇）</small></div>
+    </div>
+    <label>入职岗位（随入职方向与学历定级联动：综合管理类不出执法/技术岗，行政执法类只出执法岗）</label>
+    <div class="post-row" id="post-row"></div>
+    <label>选择派系（起步立场）——可先选"中立"观望，上级认可后会主动拉拢你入派系；加入派系后获得派系加成</label>
+    <div class="fac-row" id="fac-row">
+      <div class="fac-btn sel" data-fac="中立">中立<small>观望 · 谁都不得罪</small></div>
+      <div class="fac-btn" data-fac="实干派">实干派<small>项目政绩×1.25</small></div>
+      <div class="fac-btn" data-fac="民生派">民生派<small>口碑获取大幅提升</small></div>
+      <div class="fac-btn" data-fac="学术派">学术派<small>学历提升更快</small></div>
+    </div>
+    <button class="btn" id="btn-start">入职</button>
+    <p class="small-note">试玩版 · 规则集 QINGYUNLU-R2<br>12 职级（科员→国家主席） · 晋升选岗 · 人脉派系 · 考学党校 · 天灾立功 · 工资资产 · 合规退休（60 法定 / 弹性延后至 63 / 57 起可提前）</p>
+  </div>
+
+  <!-- 游戏主体 -->
+  <div id="game" class="hidden">
+    <header>
+      <div class="brand"><h1>青云路</h1><span>公务员晋升模拟 · R2</span></div>
+      <div class="post">
+        <div class="post-name" id="post-name">—</div>
+        <div class="post-meta" id="post-meta">—</div>
+      </div>
+    </header>
+    <main>
+      <aside>
+        <div class="card">
+          <h3>人物档案</h3>
+          <div class="person"><span>姓名</span><b id="p-name">—</b></div>
+          <div class="person"><span>年龄</span><b id="p-age">—</b></div>
+          <div class="person"><span>方向</span><b id="p-cat">—</b></div>
+          <div class="person"><span>职级</span><b id="p-rank">—</b></div>
+          <div class="person"><span>立场</span><span id="p-faction">—</span></div>
+          <div class="person"><span>立功</span><b id="p-exploit">0 次</b></div>
+        </div>
+        <div class="card">
+          <h3>五项账户</h3>
+          <div class="stat"><div class="row"><span>政绩</span><b id="v-merit">0</b></div><div class="bar"><i id="b-merit"></i></div></div>
+          <div class="stat"><div class="row"><span>口碑</span><b id="v-rep">0</b></div><div class="bar"><i id="b-rep" class="c-green"></i></div></div>
+          <div class="stat"><div class="row"><span>关系</span><b id="v-rel">0</b></div><div class="bar"><i id="b-rel" class="c-blue"></i></div></div>
+          <div class="stat"><div class="row"><span>廉政</span><b id="v-intg">0</b></div><div class="bar"><i id="b-intg" class="c-amber"></i></div></div>
+          <div class="stat"><div class="row"><span>健康</span><b id="v-health">0</b></div><div class="bar"><i id="b-health" class="c-green"></i></div></div>
+          <div class="stat"><div class="row"><span>学历</span><b id="v-edu">0</b></div><div class="bar"><i id="b-edu" class="c-blue"></i></div></div>
+          <div class="stat"><div class="row"><span>党校</span><b id="v-dangxiao">0 期</b></div></div>
+          <div class="stat"><div class="row"><span>资产</span><b id="v-wealth">现金 0 万</b></div></div>
+          <div class="stat" style="margin-top:2px;"><div class="row" style="font-size:10.5px;color:var(--faint);"><span id="v-wealth2">无房无车 · 年收入 0 万</span></div></div>
+          <div class="stat" id="v-study-row" style="display:none;"><div class="row" style="font-size:10.5px;color:var(--blue);"><span id="v-study">学历在读</span></div></div>
+        </div>
+        <div class="card">
+          <h3>人脉</h3>
+          <div id="npc-list"></div>
+        </div>
+        <div class="card">
+          <h3>晋升条件 · 下一级</h3>
+          <div id="promo-list"></div>
+          <button class="promo-cta" id="btn-review" disabled>申请组织考察</button>
+        </div>
+      </aside>
+      <section id="center">
+        <div class="phase-tip" id="phase-tip">—</div>
+        <div id="actions"></div>
+        <div id="event-box" class="hidden"></div>
+        <div id="result-box" class="hidden"></div>
+        <div id="final-box" class="hidden"></div>
+      </section>
+    </main>
+    <div id="log"><h3>履职日志</h3></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =========================================================
+   青云路 R2 Demo 规则配置（ruleset_id = QINGYUNLU-R2）
+   与 design-contract.json 数值一致
+   ========================================================= */
+const RULESET = "QINGYUNLU-R2";
+
+const CONFIG = {
+  totalYearsMax: 46,      // 22 → 68（60 法定退休 + 弹性延后至多 3 年，57 起可自愿提前）
+  startAge: 22,
+  energyPerQuarter: 100,
+  retireBase: 60,         // 法定退休年龄（男公务员 60 周岁）
+  retireMax: 63,          // 弹性延迟退休上限（最多延后 3 年）
+  retireMin: 57,          // 弹性提前退休下限（最多提前 3 年，需工龄满30年）
+
+  // 十六类季度行动（可重复，受精力约束；另加理财/捐赠两条资产花途）
+  actions: {
+    official: { name:"本职业务", cost:25, merit:10, desc:"完成日常业务，勤恳扎实", note:"政绩+10" },
+    project:  { name:"重点项目", cost:50, merit:25, health:-6, desc:"牵头攻坚重大项目", note:"政绩+25 · 健康-6" },
+    study:    { name:"学习备考", cost:30, edu:12, merit:-3, dangxiao:1, desc:"备考进修，积累党校学时", note:"学历+12 · 党校+1 · 政绩-3" },
+    mass:     { name:"群众工作", cost:25, rep:6, desc:"走村入户，化解群众诉求", note:"口碑+6" },
+    social:   { name:"社交应酬", cost:30, rel:10, intg:-6, desc:"维护组织与人际关系", note:"关系+10 · 廉政-6" },
+    rest:     { name:"休息养生", cost:20, health:12, merit:-3, desc:"调养身体，劳逸结合", note:"健康+12 · 政绩-3" },
+    report:   { name:"向上汇报", cost:20, boss:8, merit:-2, desc:"向直接上级汇报工作思路", note:"上级好感+8 · 政绩-2" },
+    peer:     { name:"维护同级", cost:20, peerRel:8, rel:4, desc:"与同僚走动，互通有无", note:"同级好感+8 · 关系+4" },
+    coach:    { name:"培养下属", cost:25, sub:5, subFav:8, desc:"指导下属业务，带好队伍", note:"下属能力+5 · 好感+8" },
+    protg:    { name:"培养骨干", cost:25, protg:1, desc:"重点扶持自己的下线干部（二级主任科员起可发展内部人，可一路扶持其晋升）", note:"骨干能力+5 · 好感+8 · 晋升进度+1" },
+    buyhouse: { name:"购房置业", cost:25, buyhouse:1, desc:"用合法收入购置房产（小区档次可选）", note:"现金→房产（普通/中档/高档）" },
+    buycar:   { name:"购车代步", cost:15, buycar:1, desc:"购置汽车（品牌档次可选）", note:"现金→汽车（经济/中档/高档）" },
+    invest:   { name:"投资理财", cost:15, invest:1, desc:"把闲置资金投入稳健理财，钱生钱", note:"投入现金 · 每季度收益约2%±3%（有波动）" },
+    donate:   { name:"慈善捐赠", cost:10, donate:1, desc:"以个人名义捐资助学、扶危济困", note:"现金-10 万 · 口碑+3 · 廉政+1" },
+    wash:     { name:"做账洗白", cost:20, wash:1, desc:"请会计把账目往来理顺（把可疑收入做成合法来源）", note:"花费可疑资产×60% 清零隐患" },
+    exam:     { name:"报考升学考试", cost:20, exam:1, desc:"学历点达标后可报考专升本/考研/考博（答对越多学校越好）", note:"考试录取 · 学制在学" },
+    party:    { name:"党建调研", cost:25, merit:8, rep:5, dangxiao:1, desc:"深入基层党组织调研党建情况（党政路线专属）", note:"政绩+8 · 口碑+5 · 党校+1" },
+    cadre:    { name:"干部考察", cost:25, rel:8, merit:5, desc:"带队考察干部人选，把好选人用人关（党政路线专属）", note:"关系+8 · 政绩+5" }
+  },
+
+  // 党政路线：行动覆盖（走党政路线后，部分行动换皮换效）
+  partyOverrides: {
+    official:{ name:"党务工作", desc:"抓党建带队伍，落实全面从严治党主体责任", note:"政绩+10 · 口碑+2" },
+    mass:    { name:"基层走访", desc:"走进支部与群众中间，体察实情", note:"口碑+6 · 关系+2" },
+    social:  { name:"组织生活", desc:"参加民主生活会、组织生活会，检身正己", note:"关系+10 · 廉政+2" },
+    report:  { name:"向组织汇报", desc:"在党委会上汇报工作思路，接受批评指导", note:"上级好感+8 · 政绩-2" },
+    peer:    { name:"班子谈心", desc:"与班子成员逐一谈心谈话，凝聚共识", note:"同级好感+8 · 关系+4" }
+  },
+
+  // ---- 工资与资产（单位：万元）----
+  salaryBase:[0.5,0.65,0.8,1.0,1.25,1.6,2.0,2.5,3.2,4.0,5.0,6.0],  // 职级月薪基准（科员→国家主席）
+  platformPay:{ 乡镇:0.9, 县:1.0, 市:1.1, 省:1.2, 部:1.3, 中央:1.35 }, // 平台收入系数
+  houseCost:{ 乡镇:30, 县:60, 市:120, 省:200, 部:350, 中央:500 },     // 各平台一套房价（基准，中档）
+  carCost:{ 经济:12, 中档:20, 高档:45 },                              // 车价（品牌档次）
+  auditMult:2,                                              // 可疑资产≥年工资×2 时面临核查
+  auditSevereMult:5,                                        // 可疑资产≥年工资×5 时核查可致处分
+  washCostMult:0.6,                                         // 洗白花费=可疑资产×0.6
+  // 房产档次（小区名与价格系数）
+  houseTiers:{ 普通:{mult:0.8}, 中档:{mult:1.0}, 高档:{mult:1.6} },
+  houseNames:{ 乡镇:{普通:"阳光小区",中档:"滨河雅苑",高档:"金湖别院"},
+    县:{普通:"书香苑",中档:"龙湖湾",高档:"翡翠公馆"},
+    市:{普通:"尚品国际",中档:"中央公园",高档:"云顶世家"},
+    省:{普通:"绿城桂语",中档:"保利天悦",高档:"星河湾"},
+    部:{普通:"长安华府",中档:"玉渊潭邸",高档:"西山壹号院"},
+    中央:{普通:"紫御华府",中档:"长安公馆",高档:"府右街寓"} },
+  carBrands:{ 经济:{name:"大众朗逸",cost:12}, 中档:{name:"丰田凯美瑞",cost:20}, 高档:{name:"奥迪A6",cost:45} },
+
+  // ---- 升学考试（学历提升：专升本 2 年 / 本升硕 3 年 / 硕升博 3 年）----
+  // 入职方向 → 可选的岗位类别（综合管理类不出现执法/纯技术岗，行政执法类只出执法岗，专业技术类出技术岗）
+  catPosts: { "综合":["综合","民生","农业","产业","教育"], "行政":["执法","民生"], "专业":["教育","农业","产业","综合"] },
+  studyNeed:{ 40:{target:60,label:"专升本",total:8,  degree:"本科"}, 60:{target:80,label:"本升硕",total:12, degree:"硕士"}, 80:{target:100,label:"硕升博",total:12, degree:"博士"} },
+  majors:[
+    { name:"行政管理", focus:"综合" },
+    { name:"农业经济管理", focus:"农业" },
+    { name:"产业经济学", focus:"产业" },
+    { name:"法学", focus:"执法" },
+    { name:"公共事业管理", focus:"民生" },
+    { name:"教育经济与管理", focus:"教育" }
+  ],
+  examQuestions:[
+    { q:"公务员年度考核的等次共分为几个？", opts:["3 个","4 个","5 个"], a:1 },
+    { q:"我国的根本政治制度是？", opts:["人民代表大会制度","多党合作制度","民族区域自治制度"], a:0 },
+    { q:"中国共产党的根本宗旨是？", opts:["全心全意为人民服务","大力发展经济","维护社会稳定"], a:0 },
+    { q:"我国现行宪法是哪一年颁布实施的？", opts:["1982 年","1990 年","1999 年"], a:0 },
+    { q:"行政诉讼中，一般由谁承担举证责任？", opts:["原告","被告","法官"], a:1 },
+    { q:"公务员辞职应当向哪个机关提出申请？", opts:["任免机关","同级人大","上级党委"], a:0 },
+    { q:"基层群众自治组织包括？", opts:["居委会和村委会","街道办和乡镇政府","派出所和司法所"], a:0 },
+    { q:"依法行政的首要原则是？", opts:["合法行政","高效便民","诚实守信"], a:0 },
+    { q:"我国的国体（国家性质）是？", opts:["人民民主专政","三权分立","君主立宪"], a:0 },
+    { q:"国务院是我国最高国家权力机关的？", opts:["执行机关","立法机关","司法机关"], a:0 },
+    { q:"公务员年度考核优秀等次的比例一般不超过？", opts:["20%","30%","40%"], a:0 },
+    { q:"行政处罚中「一事不再罚」是指？", opts:["同一违法行为不得给予两次以上罚款","同一违法行为只能警告一次","同一违法行为只能处罚一次"], a:0 }
+  ],
+
+  // 12 职级 × 岗位池（每职级6-12个候选，选岗随机出3个；职级归属符合现行干部职级序列）
+  ranks: [
+    { name:"一级科员", level:"科员级", posts:[
+      { t:"乡镇党政办科员", focus:"综合" },
+      { t:"乡镇财政所科员", focus:"综合" },
+      { t:"乡镇统计站科员", focus:"综合" },
+      { t:"乡村振兴办科员", focus:"民生" },
+      { t:"乡镇民政办科员", focus:"民生" },
+      { t:"乡镇信访办科员", focus:"民生" },
+      { t:"乡镇农业服务中心科员", focus:"农业" },
+      { t:"乡镇经济发展办科员", focus:"产业" },
+      { t:"乡镇文化教育站科员", focus:"教育" },
+      { t:"乡镇综治办科员", focus:"执法" },
+      { t:"乡镇市场监管所科员", focus:"执法" },
+      { t:"乡镇司法所科员", focus:"执法" },
+      { t:"乡镇派出所民警", focus:"执法" },
+      { t:"乡镇综合行政执法队队员", focus:"执法" },
+      { t:"市城市管理综合行政执法局科员", focus:"执法" }
+    ]},
+    { name:"四级主任科员", level:"副科级", posts:[
+      { t:"副镇长（分管农业）", focus:"农业" },
+      { t:"副镇长（分管工业）", focus:"产业" },
+      { t:"副镇长（分管教育卫生）", focus:"教育" },
+      { t:"镇派出所所长", focus:"执法" },
+      { t:"县农业农村局副局长（分管种植业）", focus:"农业" },
+      { t:"县卫生健康局副局长（分管医政）", focus:"民生" },
+      { t:"县市场监督管理局副局长（分管执法）", focus:"执法" },
+      { t:"乡镇党委副书记", focus:"党务" }
+    ]},
+    { name:"二级主任科员", level:"正科级", posts:[
+      { t:"镇长", focus:"综合" },
+      { t:"县农业农村局局长", focus:"农业" },
+      { t:"县产业局局长", focus:"产业" },
+      { t:"县教育局局长", focus:"教育" },
+      { t:"县市场监管局局长", focus:"执法" },
+      { t:"县卫生健康局局长", focus:"民生" },
+      { t:"乡镇党委书记", focus:"党务" },
+      { t:"县直机关工委书记", focus:"党务" }
+    ]},
+    { name:"四级调研员", level:"副处级", posts:[
+      { t:"副县长（分管农业）", focus:"农业" },
+      { t:"副县长（分管产业）", focus:"产业" },
+      { t:"副县长（分管教育卫生）", focus:"教育" },
+      { t:"副县长（分管政法）", focus:"执法" },
+      { t:"县公安局局长（兼任副县长）", focus:"执法" },
+      { t:"市应急管理局副局长（分管防灾减灾）", focus:"民生" },
+      { t:"县纪委书记", focus:"党务" },
+      { t:"县委组织部副部长", focus:"党务" }
+    ]},
+    { name:"二级调研员", level:"正处级", posts:[
+      { t:"县长", focus:"综合" },
+      { t:"市农业农村局局长", focus:"农业" },
+      { t:"市产业局局长", focus:"产业" },
+      { t:"市教育局局长", focus:"教育" },
+      { t:"市综合执法局局长", focus:"执法" },
+      { t:"市卫生健康委主任", focus:"民生" },
+      { t:"县委书记", focus:"党务" },
+      { t:"县委副书记", focus:"党务" }
+    ]},
+    { name:"二级巡视员", level:"副厅级", posts:[
+      { t:"主管农业副市长", focus:"农业" },
+      { t:"主管产业副市长", focus:"产业" },
+      { t:"主管教育副市长", focus:"教育" },
+      { t:"市公安局局长（兼任副市长）", focus:"执法" },
+      { t:"省农业农村厅副厅长（分管农业产业化）", focus:"农业" },
+      { t:"省产业厅副厅长（分管工业经济）", focus:"产业" },
+      { t:"市委副书记", focus:"党务" },
+      { t:"市纪委书记", focus:"党务" }
+    ]},
+    { name:"一级巡视员", level:"正厅级", posts:[
+      { t:"市长", focus:"综合" },
+      { t:"省农业农村厅厅长", focus:"农业" },
+      { t:"省产业厅厅长", focus:"产业" },
+      { t:"省教育厅厅长", focus:"教育" },
+      { t:"省公安厅厅长", focus:"执法" },
+      { t:"省卫生健康委主任", focus:"民生" },
+      { t:"省委组织部副部长", focus:"党务" },
+      { t:"省纪委副书记", focus:"党务" }
+    ]},
+    { name:"副部级", level:"副部级", posts:[
+      { t:"副省长（分管农业）", focus:"农业" },
+      { t:"副省长（分管产业）", focus:"产业" },
+      { t:"副省长（分管教育）", focus:"教育" },
+      { t:"副省长（分管政法）", focus:"执法" },
+      { t:"部委副部长（执法监察）", focus:"执法" },
+      { t:"部委副部长（民生保障）", focus:"民生" },
+      { t:"省委副书记", focus:"党务" },
+      { t:"省委组织部部长", focus:"党务" }
+    ]},
+    { name:"正部级", level:"正部级", posts:[
+      { t:"省委书记", focus:"党务" },
+      { t:"省长", focus:"综合" },
+      { t:"国务院部长（分管综合协调）", focus:"综合" },
+      { t:"国务院部长（分管产业发展）", focus:"产业" },
+      { t:"国务院部长（分管农业农村）", focus:"农业" },
+      { t:"国务院部长（分管教育科技）", focus:"教育" },
+      { t:"国务院部长（分管执法监管）", focus:"执法" },
+      { t:"中央组织部部长", focus:"党务" },
+      { t:"中央统战部部长", focus:"党务" }
+    ]},
+    { name:"副国级", level:"副国级", posts:[
+      { t:"国务院副总理（分管经济）", focus:"专项" },
+      { t:"国务院副总理（分管农业农村）", focus:"专项" },
+      { t:"国务委员（专项）", focus:"专项" },
+      { t:"全国人大常委会副委员长", focus:"专项" },
+      { t:"全国政协副主席", focus:"专项" },
+      { t:"最高人民法院院长", focus:"专项" },
+      { t:"最高人民检察院检察长", focus:"专项" },
+      { t:"国家监察委员会主任", focus:"专项" },
+      { t:"中央政治局委员", focus:"党务" }
+    ]},
+    { name:"正国级", level:"正国级", posts:[
+      { t:"国务院总理", focus:"专项" },
+      { t:"全国人大常委会委员长", focus:"专项" },
+      { t:"全国政协主席", focus:"专项" },
+      { t:"国家副主席", focus:"专项" },
+      { t:"中央政治局常委", focus:"党务" }
+    ]},
+    { name:"国家主席", level:"国家元首", posts:[
+      { t:"中华人民共和国主席（国家元首）", focus:"专项" }
+    ]}
+  ],
+
+  // 岗位加成：领域 → 加成描述与数值
+  postMods: {
+    "综合": { desc:"统筹全域，全面治理", merit:1.08, rep:0, edu:0, note:"全局政绩+8% · 年度考核+1分" },
+    "农业": { desc:"深耕三农，农业与民生项目政绩显著", merit:1.15, rep:2, edu:0, note:"农业/民生政绩+15%" },
+    "产业": { desc:"主抓产业经济，项目攻坚能力强", merit:1.20, rep:0, edu:0, note:"产业政绩+20%" },
+    "执法": { desc:"执法一线，雷厉风行；权力集中，廉政风险点更多", merit:1.12, rep:0, edu:0, note:"执法政绩+12% · 廉政事件概率上升" },
+    "民生": { desc:"民生为本，群众基础扎实", merit:1.00, rep:2, edu:0, note:"口碑+2/季度" },
+    "教育": { desc:"科教文卫，学习氛围浓厚", merit:0.95, rep:1, edu:4, note:"学历+4/季度" },
+    "党务": { desc:"抓党建带队伍，选人用人权集中，需党校经历", merit:1.05, rep:2, rel:2, edu:0, note:"组织建设政绩+5% · 口碑+2 · 关系+2/季度（党政路线）" },
+    "专项": { desc:"国家层面统筹，干事舞台更大", merit:1.20, rep:0, edu:0, note:"国家级政绩+20%" }
+  },
+
+  // 晋升条件表（R2）：[任职年限, 累计政绩, 测评%, 学历分, 年龄上限, 附加说明]
+  promote: [
+    { years:3, merit:300,  eval:55, edu:0,   age:99, extra:"" },
+    { years:3, merit:650,  eval:60, edu:60,  age:99, extra:"学历需本科（大专需先通过学习补到本科）" },
+    { years:4, merit:1200, eval:65, edu:60,  age:99, extra:"学历需本科" },
+    { years:4, merit:2000, eval:70, edu:80,  age:99, extra:"学历需硕士" },
+    { years:5, merit:3200, eval:75, edu:60,  age:50, extra:"学历需本科 · 党校2期" },
+    { years:5, merit:4600, eval:78, edu:60,  age:55, extra:"学历需本科（正厅）" },
+    { years:5, merit:6200, eval:80, edu:80,  age:58, extra:"学历需硕士" },
+    { years:5, merit:7000, eval:82, edu:80,  age:60, extra:"学历需硕士（正部）" },
+    { years:5, merit:9000, eval:85, edu:100, age:63, extra:"学历需博士 · 国家级重大政绩≥3" },
+    { years:5, merit:11000, eval:88, edu:100, age:65, extra:"学历需博士 · 国家级重大政绩≥5" },
+    { years:5, merit:14000, eval:92, edu:100, age:68, extra:"学历需博士 · 国家级重大政绩≥8 · 全党全国拥戴" }
+  ],
+
+  excellentLine: { 乡镇:35, 县:37, 市:39, 省:41, 部:43, 中央:45 },
+
+  platformOf: function(rank){ return [0,1].includes(rank) ? "乡镇" : [2,3].includes(rank) ? "县" : rank===4 ? "市" : [5,6].includes(rank) ? "省" : [7,8].includes(rank) ? "部" : "中央"; },
+  effOf: function(rank){ const p=this.platformOf(rank); return {乡镇:1.00,县:1.15,市:1.30,省:1.50,部:1.80,中央:2.10}[p]; },
+
+  // 岗位的领域直接挂在岗位对象上（见 ranks 定义），postFocus 由岗位决定
+
+  // 选岗：从当前职级岗位池随机抽 3 个候选；党务岗（党政路线）需党校经历解锁
+  pickPosts: function(rank){
+    const pool = CONFIG.ranks[rank].posts.slice();
+    const partyPool = pool.filter(p=>p.focus==="党务");
+    const adminPool = pool.filter(p=>p.focus!=="党务");
+    const shuffle = arr => { const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+    let chosen;
+    if(S && S.path==="党政"){
+      // 党政路线：党务岗优先出现（2 党务 + 1 行政，混排）
+      const part = shuffle(partyPool).slice(0,2);
+      const adm = shuffle(adminPool).slice(0,1);
+      chosen = shuffle(part.concat(adm)).slice(0,3);
+    } else if(S && S.dangxiao>=4){
+      // 完成 1 期党校：党务岗解锁（2 行政 + 1 党务）
+      const adm = shuffle(adminPool).slice(0,2);
+      const part = shuffle(partyPool).slice(0,1);
+      chosen = shuffle(adm.concat(part)).slice(0,3);
+    } else {
+      chosen = shuffle(adminPool).slice(0,3);
+    }
+    return chosen;
+  },
+
+  // 事件池（含天灾）
+  events: function(platform){
+    const P = platform;
+    return [
+      { cat:"民生", title:P+"群众信访", text:"一位"+P+"的信访群众反映土地补偿问题，情绪激动，围在办公室门口。",
+        opts:[
+          { t:"耐心倾听，当场协调", r:{rep:6}, note:"口碑+6" },
+          { t:"组织部门联合调处", r:{merit:8}, note:"政绩+8" }
+        ]},
+      { cat:"经济", title:P+"招商引资", text:"一家企业有意向在"+P+"投资建厂，机会难得，但程序上有些可松动的空间。",
+        opts:[
+          { t:"全力争取，特事特办", r:{merit:20, intg:-5}, note:"政绩+20 · 廉政-5", risk:"廉洁风险" },
+          { t:"按程序稳扎稳打", r:{merit:10, rel:3}, note:"政绩+10 · 关系+3" }
+        ]},
+      { cat:"廉政", title:"企业送来'心意'", text:"项目中标方登门拜访，留下一张购物卡，说只是'过节心意'。",
+        opts:[
+          { t:"婉言谢绝并上报", r:{rep:2, intg:5}, note:"口碑+2 · 廉政+5" },
+          { t:"碍于情面收下", r:{rel:8, intg:-15, violation:true}, note:"关系+8 · 廉政-15", risk:"违纪记录" }
+        ]},
+      { cat:"机遇", title:"青年干部培训班", text:"上级组织"+P+"青年干部培训班，脱产三个月，机会难得但会暂离岗位。",
+        opts:[
+          { t:"报名参加", r:{edu:10, merit:-5, dangxiao:1}, note:"学历+10 · 党校+1 · 政绩-5" },
+          { t:"专注当下工作", r:{merit:8}, note:"政绩+8" }
+        ]},
+      { cat:"风险", title:"突发舆情", text:"一则关于"+P+"工作的网络传言发酵，需要尽快回应。",
+        opts:[
+          { t:"及时公开回应澄清", r:{rep:-2}, note:"口碑-2" },
+          { t:"冷处理等待平息", r:{rep:-8}, note:"口碑-8" }
+        ]},
+      { cat:"天灾", title:P+"防汛抢险", text:"暴雨来袭，"+P+"出现内涝险情，多处堤段告急，需要干部带队处置。",
+        opts:[
+          { t:"带头冲锋一线抢险", r:{merit:150, rep:6, health:-12, exploit:1}, note:"立功！政绩+150 · 口碑+6 · 健康-12", exploit:true },
+          { t:"统筹调度指挥部", r:{merit:50, health:-4}, note:"政绩+50 · 健康-4" },
+          { t:"因处置不力被问责", r:{merit:-30, rep:-10, accountability:true}, note:"政绩-30 · 口碑-10", risk:"问责风险（免职降级）" }
+        ]},
+      { cat:"天灾", title:P+"地震救援", text:P+"突发地震，灾区群众急需救援安置，救援窗口期紧张。",
+        opts:[
+          { t:"组织救援并亲赴一线", r:{merit:140, rep:7, health:-10, exploit:1}, note:"立功！政绩+140 · 口碑+7 · 健康-10", exploit:true },
+          { t:"统筹后方保障", r:{merit:45, rep:3}, note:"政绩+45 · 口碑+3" }
+        ]},
+      { cat:"廉政", title:"巡察组进驻", text:"上级巡察组进驻"+P+"开展常规巡察，需要配合谈话并梳理账目。",
+        opts:[
+          { t:"主动配合，全面自清", r:{rep:3, intg:5, rel:2}, note:"口碑+3 · 廉政+5 · 关系+2" },
+          { t:"消极应付，拖延材料", r:{intg:-5}, note:"廉政-5" }
+        ]}
+    ];
+  },
+
+  // 收礼事件（动态生成：写明送礼人、目的、礼品与价值）
+  // 送礼人随职级分层：低职级只有小打小闹（村干部/包工头/乡镇干部），副处以上才有工程老板/开发商，厅级以上才可能出现开发商巨款；
+  // 开发商拿地金额随平台水涨船高（乡镇小地块千万级 → 中央国家级项目数亿级），杜绝"科员收开发商上亿"的失真场景。
+  // 收下商人/企业的礼金会推动项目落地：按金额比例获得政绩（开发商拿地最高，办成事的代价是留下把柄）
+  giftEvent: function(){
+    const plat = CONFIG.platformOf(S.rank);
+    const ann = salaryAnnual();
+    const landBase = { 乡镇:1500, 县:3000, 市:6000, 省:15000, 部:25000, 中央:40000 };  // 各平台拿地基准（万元）
+    const land = Math.round((landBase[plat]||3000) * (0.7 + Math.random()*0.6));
+    const R = S.rank;
+    const givers = R<=1 ? [  // 科员级/副科：基层小打小闹
+      { who:"求关照的村干部", why:"希望你在宅基地、低保等事项上通融一下", base:()=> 0.5+Math.round(Math.random()*2+R*0.5), meritRate:0 },
+      { who:"辖区小工程包工头", why:"希望承包镇里的小工程时得到照顾", base:()=> Math.round(ann*(0.2+Math.random()*0.4)), meritRate:0.01 },
+      { who:"求晋升的乡镇干部", why:"希望你在组织谈话、民主测评时多美言", base:()=> 1+Math.round(Math.random()*4), meritRate:0 }
+    ] : R<=3 ? [  // 正科/副处：县里能见到工程与地块
+      { who:"求晋升的下级干部", why:"希望你在组织考察时多多美言，推他一把", base:()=> 3+Math.round(Math.random()*12+R*2), meritRate:0 },
+      { who:"辖区工程老板", why:"为中标项目运作关系，暗示招标时照顾", base:()=> Math.round(ann*(0.4+Math.random()*0.6)), meritRate:0.02 },
+      { who:"中小房地产开发商", why:"希望在"+plat+"拿到一块地开发楼盘", base:()=> land, meritRate:0.04 }
+    ] : R<=6 ? [  // 正处/副厅/正厅：市里省里，开发商与中标企业登场
+      { who:"求晋升的下级干部", why:"希望你在组织考察时多多美言，推他一把", base:()=> 5+Math.round(Math.random()*25+R*2), meritRate:0 },
+      { who:"辖区工程老板", why:"为中标项目运作关系，暗示招标时照顾", base:()=> Math.round(ann*(0.4+Math.random()*0.6)), meritRate:0.02 },
+      { who:"房地产开发商", why:"希望以优惠价在"+plat+"拿地开发", base:()=> land, meritRate:0.04 },
+      { who:"中标企业负责人", why:"感谢项目结算时高抬贵手", base:()=> Math.round(ann*(0.8+Math.random()*0.7)), meritRate:0.03 }
+    ] : [  // 副部级以上：国家级舞台，巨款登场
+      { who:"求晋升的厅级干部", why:"希望你在组织考察时多多美言，推他一把", base:()=> 10+Math.round(Math.random()*90+R*3), meritRate:0 },
+      { who:"大型工程企业负责人", why:"为国家级项目运作关系，暗示招标时照顾", base:()=> Math.round(ann*(0.5+Math.random()*1.0)), meritRate:0.02 },
+      { who:"房地产开发商", why:"希望以优惠价在"+plat+"拿地开发大盘", base:()=> land, meritRate:0.04 },
+      { who:"央企/上市公司负责人", why:"感谢项目结算时高抬贵手", base:()=> Math.round(ann*(1.0+Math.random()*1.5)), meritRate:0.03 }
+    ];
+    const g = givers[Math.floor(Math.random()*givers.length)];
+    const amount = g.base();
+    const item = amount>=5000 ? "现金 "+amount+" 万（巨款）" : amount>=500 ? "名家字画+现金共 "+amount+" 万" : amount>=50 ? "名表与现金共 "+amount+" 万" : amount>=5 ? "购物卡与现金共 "+amount+" 万" : "红包 "+amount+" 万";
+    const huge = amount>=5000;
+    const mRate = g.meritRate || 0;
+    const mGain = Math.round(amount * mRate);
+    const mGain2 = Math.round(amount * mRate * 1.5);
+    const mNote = mGain>0 ? " · 政绩+"+mGain : "";
+    const mNote2 = mGain2>0 ? " · 政绩+"+mGain2 : "";
+    return { cat:"廉政", title:"有人登门送礼", huge,
+      text:"一位"+g.who+"趁夜登门拜访，"+g.why+"，放下一个信封："+item+"。价值 "+amount+" 万"+(huge?"——金额巨大，一旦收下几乎无法洗清，必遭核查！":(mGain>0?"收下意味着你会在职责范围内推动这件事落地，政绩可期，但账上会留痕。":"收不收，是个问题。")),
+      opts:[
+        { t:"严词拒绝并上报", r:{intg:4, rep:2}, note:"廉政+4 · 口碑+2" },
+        { t:"碍于情面收下", r:{cash:amount, dirty:amount, merit:mGain, intg:-8, rel:3}, note:"现金+"+amount+" 万"+mNote+" · 廉政-8 · 关系+3", risk:"不明资产留痕，可能被查" },
+        { t:"收下并承诺关照", r:{cash:amount, dirty:amount, merit:mGain2, intg:-15, rel:6, violation:true}, note:"现金+"+amount+" 万"+mNote2+" · 廉政-15 · 关系+6", risk:"违纪记录+不明资产" }
+      ]};
+  },
+
+  // 重大立功稀有事件：特大灾害（极低概率触发，终身仅 1 次，可直接晋升一级）
+  // 处置方式按职级层级差异化：科员级=一线抢险，处科级=现场指挥，厅级以上=坐镇调度（符合现实）
+  majorEvents: function(){
+    const depl = S.rank<=1 ? "你第一时间赶赴最险堤段，与抢险队伍并肩堵漏加固、组织群众转移，在最危险的地方值守" :
+               S.rank<=4 ? "你亲赴一线现场指挥抢险队伍，调度物资与力量，组织群众安全转移" :
+               "你在前线指挥部坐镇调度，统筹多方力量科学抢险、分级转移";
+    return [
+      { cat:"天灾", title:"特大洪灾（百年一遇）", text:"本地区遭遇百年一遇特大洪水，多处堤坝告急、群众被困，全省动员抢险。这是检验干部的关口，也是成就干部的时刻。"+depl+"。",
+        opts:[
+          { t:"临危受命，处置得当", r:{merit:400, rep:10, health:-15, majorExploit:1}, note:"★重大立功！政绩+400 · 口碑+10 · 健康-15（终身仅1次，可直接晋升一级）", exploit:true },
+          { t:"统筹协调调度", r:{merit:80, health:-8}, note:"政绩+80 · 健康-8" },
+          { t:"因处置不力被问责", r:{merit:-50, rep:-15, accountability:true}, note:"政绩-50 · 口碑-15", risk:"问责风险（免职降级）" }
+        ]}
+    ];
+  },
+
+  // 上级帮扶事件（维护上级好感≥70时可能触发：你维护的上级会反过来帮你）
+  helpEvents: function(){
+    return [
+      { cat:"上级帮扶", title:"上级为你争取评优", text:"你的直接上级在党委会上为你说话，强调你牵头项目的实绩。",
+        opts:[
+          { t:"感谢并继续实干", r:{rep:2, evalBoost:2}, note:"口碑+2 · 下年度考核+2分" }
+        ]},
+      { cat:"上级帮扶", title:"上级交办重点任务", text:"上级把一项重点工程点名交给你牵头，这是实打实的露脸机会。",
+        opts:[
+          { t:"接下任务，全力以赴", r:{merit:25, health:-4}, note:"政绩+25 · 健康-4" },
+          { t:"婉辞并举荐他人", r:{bossFav:-8}, note:"上级好感-8" }
+        ]},
+      { cat:"上级帮扶", title:"上级带你向上汇报", text:"上级带你向更高层领导当面汇报工作，给你引路。",
+        opts:[
+          { t:"充分准备，展示实绩", r:{merit:10, rel:5, bossFav:2}, note:"政绩+10 · 关系+5 · 上级好感+2" },
+          { t:"紧张发挥失常", r:{merit:-5, rel:-3}, note:"政绩-5 · 关系-3" }
+        ]}
+    ];
+  },
+
+  // 派系拉拢事件（中立且上级好感≥75时触发：上级认可你会拉你入他的派系）
+  recruitEvent: function(){
+    return { cat:"派系", title:"上级拉你入派", text:"你的上级私下找你谈话，希望你能加入他的派系，互相照应、共进退。",
+      opts:[
+        { t:"接受，加入他的派系", r:{factionJoin:true, factionScore:15, bossFav:5}, note:"加入其派系 · 派系声望+15 · 上级好感+5" },
+        { t:"婉拒，保持中立", r:{bossFav:-8, factionScore:2}, note:"上级好感-8 · 中立声望+2" },
+        { t:"以事业为重，暂不表态", r:{bossFav:-3, factionScore:3}, note:"上级好感-3 · 中立声望+3" }
+      ]};
+  },
+
+  // 下线/内部人事件
+  protegeEvents: function(){
+    return [
+      { cat:"内部人", title:"你的骨干被举报", text:"有人举报你的骨干"+protgName()+"存在作风问题，正在调查。",
+        opts:[
+          { t:"力保骨干，承担连带责任", r:{intg:-10, protgFav:10}, note:"廉政-10 · 骨干好感+10", risk:"连带风险" },
+          { t:"公事公办，配合调查", r:{protgFav:-30, intg:5}, note:"骨干好感-30 · 廉政+5" }
+        ]}
+    ];
+  },
+
+  // 派系争斗事件
+  factionEvents: function(){
+    return [
+      { title:"年度考核抢功风波", text:"临近考核，另一派系把你牵头项目的功劳往自己身上揽，还向上级递了材料。",
+        opts:[
+          { t:"据理力争，公开材料", r:{merit:10, rel:-3, faction:5}, note:"政绩+10 · 关系-3 · 派系声望+5" },
+          { t:"顾全大局，私下沟通", r:{rep:2, rel:3, faction:2}, note:"口碑+2 · 关系+3 · 派系声望+2" }
+        ]},
+      { title:"派系攻讦", text:"有匿名材料反映你'作风问题'，矛头直指你的晋升，组织正在了解情况。",
+        opts:[
+          { t:"主动说明，清者自清", r:{rep:3, intg:3, faction:3}, note:"口碑+3 · 廉政+3 · 声望+3" },
+          { t:"找靠山摆平", r:{rel:8, intg:-8, faction:2}, note:"关系+8 · 廉政-8 · 声望+2", risk:"廉洁风险" }
+        ]},
+      { title:"项目资源争夺", text:"两个班子同时看中一个省级项目盘子，书记倾向对方，你被点名去争取。",
+        opts:[
+          { t:"以政绩说话，用数据争取", r:{merit:15, rel:-2, faction:4}, note:"政绩+15 · 关系-2 · 声望+4" },
+          { t:"适度让渡，积累人脉", r:{rel:8, merit:-5, faction:1}, note:"关系+8 · 政绩-5 · 声望+1" }
+        ]}
+    ];
+  },
+
+  // NPC 姓名池：45 名，姓唯一、尾字唯一、无同音近形（同屏不重名、不近名，如避免"王守正/秦守正"）
+  names: ["赵克勤","钱守道","孙浩然","李承泽","周正邦","吴敬修","郑明远","王若谷","冯景行","陈致和","褚存厚","卫立谦","蒋守朴","沈怀毅","韩秉川","杨定岳","朱维恒","秦望山","尤澄","许怀楷","何骏","吕嘉策","施敬恪","张自勉","孔靖","曹守澹","严从简","华清素","金昭","魏谦逊","陶嘉稷","姜元牧","戚怀劭","谢自砺","邹瀚","喻骅","柏晟","水峥","窦斌","章汶","云治","苏安澜","潘达","葛皓","奚嵩"]
+};
+
+/* ================= 游戏状态 ================= */
+let S = null;
+
+function newState(name, cat, faction, eduBg, postFocus){
+  const catMod = {
+    "综合": { rep:10,  merit:0,  edu:0 },
+    "行政": { rep:-5,  merit:25, edu:0 },
+    "专业": { rep:0,   merit:-5, edu:20 }
+  }[cat];
+  // 学历背景 → 起点学历与定级（《新录用公务员任职定级规定》：本科定一级科员/硕士四级主任科员/博士二级主任科员）
+  const eduMap = {
+    dazhuan: { edu:40, rank:0, note:"大专，定一级科员（科员级）" },
+    benke:   { edu:60, rank:0, note:"本科，定一级科员（科员级）" },
+    shuoshi: { edu:80, rank:1, note:"硕士，定四级主任科员（副科级）" },
+    boshi:   { edu:100, rank:2, note:"博士，定二级主任科员（正科级）" }
+  }[eduBg] || { edu:40, rank:0, note:"大专，定一级科员" };
+  const facMod = {
+    "中立":   {},
+    "实干派": { meritMult:1.25, desc:"重点项目类产出大幅提升" },
+    "民生派": { repBonus:4,     desc:"群众工作口碑大幅提升" },
+    "学术派": { eduBonus:10,    desc:"学习备考学历大幅提升" }
+  }[faction];
+  // 入职职务岗位：统一从基层办所岗位池（rank0）选择——学历只定职级待遇，职务一律从基层干起
+  // （现实中硕士定四级主任科员是"职级待遇"，职务仍是科员级岗位，副镇长等领导职务须组织提拔）
+  const basePosts = CONFIG.ranks[0].posts;
+  let postIdx = basePosts.findIndex(p=>p.t===postFocus);
+  if(postIdx<0) postIdx = 0;
+  const pf = basePosts[postIdx].focus;
+  const postTitle = basePosts[postIdx].t;
+  const baseSalary = CONFIG.salaryBase[eduMap.rank] || CONFIG.salaryBase[0];
+  return {
+    name, cat, faction, eduBg: eduMap.note,
+    year:1, quarter:1, rank:eduMap.rank, yearsInRank:1,
+    age:CONFIG.startAge,
+    energy:CONFIG.energyPerQuarter,
+    merit:0, rep:60+catMod.rep, rel:25, intg:88, health:92, edu:eduMap.edu+catMod.edu,
+    path:"行政",                                       // 路线：行政 / 党政（党校1期后可选党务岗转党政线）
+    lastYearMerit:0, yearActions:0,
+    evalHistory:[],
+    eventThisQuarter:false, quarterDone:false,
+    reviewAllowed:false, reviewUsed:false,
+    retired:false, exitReason:null,
+    exploit:0, lastExploitYear:-99, majorCount:0, majorExploit:0,  // 普通立功/国家级重大政绩/重大立功
+    dangxiao:0,                                      // 党校期数（4次学习=1期）
+    violation:false,                                 // 违纪记录（双开判定）
+    investigation:false,                             // 立案审查中
+    postFocus:pf, postIdx:postIdx, postTitle:postTitle,
+    career:[{ title:postTitle, focus:pf, startYear:1, startAge:CONFIG.startAge, years:0, reason:"入职定级" }],  // 个人履历：历任岗位/年限/晋升原因
+    lastPromoReason:"组织提拔",                       // 最近一次晋升的原因（用于履历记录）
+    cash:0, house:0, houses:[], car:null, dirty:0, wealthChecks:0, invest:0, // 资产：现金(万)/房产套数/房产明细/车{品牌,价}/不明资产/被查次数/理财本金
+    studyStatus:null,                               // 升学在读：{label, target, progress, total, school, major, majorFocus}
+    majorFocus:null,                                // 毕业专业方向（匹配岗位政绩+10%）
+    facMult: facMod.meritMult||1.0, facRepBonus: facMod.repBonus||0, facEduBonus: facMod.eduBonus||0,
+    factionScore: faction==="中立" ? 50 : 40,        // 派系声望/中立声望
+    npcs:{ bosses:[], peers:[], subs:[], protgs:[] },  // 人脉圈：上级/同级/下属/下线（内部人）
+    evalBoost:0,                                      // 上级帮扶带来的下年度考核加分
+    warn2Bad:false,
+    log:[]
+  };
+}
+
+/* ================= 人脉圈 v2：带职务的多人 NPC ================= */
+// 每职级按现实机关结构配置上级/同级/下属职务（一级科员无下属，四级主任科员起配下属）
+const NPC_TEMPLATES = {
+  0:{ bosses:[{t:"乡镇党委书记"},{t:"镇长"}], peers:[{t:"镇党政办科员"},{t:"镇组织干事"},{t:"乡村振兴办科员"}], subs:[] },
+  1:{ bosses:[{t:"镇长"},{t:"镇党委书记"}], peers:[{t:"副镇长（分管工业）"},{t:"副镇长（分管教育卫生）"},{t:"县农业农村局副局长（分管种植业）"}], subs:[{t:"镇农业办主任"},{t:"镇民政办主任"},{t:"镇党政办干事"}] },
+  2:{ bosses:[{t:"县委书记"},{t:"县长"}], peers:[{t:"镇党委书记"},{t:"县产业局局长"},{t:"县财政局局长"}], subs:[{t:"副镇长（分管农业）"},{t:"镇党政办主任"},{t:"镇经济发展办主任"}] },
+  3:{ bosses:[{t:"县委书记"},{t:"县长"}], peers:[{t:"副县长（分管产业）"},{t:"副县长（分管教育卫生）"},{t:"市应急管理局副局长（分管防灾减灾）"}], subs:[{t:"县农业农村局局长"},{t:"县产业局局长"},{t:"县政府办副主任"}] },
+  4:{ bosses:[{t:"市委书记"},{t:"市长"}], peers:[{t:"县委书记"},{t:"市产业局局长"},{t:"市财政局局长"}], subs:[{t:"副县长（分管农业）"},{t:"副县长（分管产业）"},{t:"县政府办主任"}] },
+  5:{ bosses:[{t:"市委书记"},{t:"市长"}], peers:[{t:"副市长（分管产业）"},{t:"副市长（分管教育）"},{t:"省农业农村厅副厅长（分管农业产业化）"}], subs:[{t:"市农业农村局局长"},{t:"市公安局局长"},{t:"市府办秘书长"}] },
+  6:{ bosses:[{t:"省委书记"},{t:"省长"}], peers:[{t:"市长"},{t:"省产业厅厅长"},{t:"省委组织部副部长"}], subs:[{t:"副市长（分管农业）"},{t:"副市长（分管产业）"},{t:"市政府秘书长"}] },
+  7:{ bosses:[{t:"省委书记"},{t:"省长"}], peers:[{t:"副省长（分管产业）"},{t:"副省长（分管教育）"},{t:"部委副部长（分管执法监察）"}], subs:[{t:"省农业农村厅厅长"},{t:"省产业厅厅长"},{t:"省政府副秘书长"}] },
+  8:{ bosses:[{t:"国务院副总理"},{t:"全国人大常委会副委员长"}], peers:[{t:"省委书记"},{t:"国务院部长"},{t:"中央组织部部长"}], subs:[{t:"部委副部长（分管民生保障）"},{t:"省主要领导"},{t:"部办公厅主任"}] },
+  9:{ bosses:[{t:"国务院总理"},{t:"全国人大常委会委员长"}], peers:[{t:"国务院副总理"},{t:"全国政协副主席"},{t:"最高人民法院院长"}], subs:[{t:"国务院部长"},{t:"省委书记"},{t:"部委领导"}] },
+  10:{ bosses:[{t:"中华人民共和国主席"}], peers:[{t:"国务院总理"},{t:"全国人大常委会委员长"},{t:"全国政协主席"}], subs:[{t:"国务院副总理"},{t:"国家副主席"},{t:"国务委员"}] },
+  11:{ bosses:[], peers:[{t:"全国人民代表大会（国家权力机关）"}], subs:[{t:"国务院总理"},{t:"全国人大常委会委员长"},{t:"全国政协主席"}] }
+};
+function pickFaction(){
+  const r = Math.random();
+  return r<0.34 ? "实干派" : r<0.67 ? "民生派" : r<0.85 ? "学术派" : null;
+}
+function makeNpc(name, title, fav, ability, faction){
+  return { id:"n"+Math.floor(Math.random()*1e9), name, title, fav, ability, faction: faction!==undefined ? faction : null };
+}
+function randName(pool){ return pool[Math.floor(Math.random()*pool.length)]; }
+// 同批去重取名：全名唯一 + 姓唯一 + 尾字唯一（"王守正/秦守正"这类重名近名不会再出现）
+function pickName(used){
+  const pool = CONFIG.names;
+  const clean = n => !used.has(n) && !used.has("s:"+n.charAt(0)) && !used.has("e:"+n.charAt(n.length-1));
+  let cands = pool.filter(clean);
+  if(!cands.length) cands = pool.filter(n=>!used.has(n));
+  if(!cands.length) cands = pool.slice();
+  const pick = cands[Math.floor(Math.random()*cands.length)];
+  used.add(pick); used.add("s:"+pick.charAt(0)); used.add("e:"+pick.charAt(pick.length-1));
+  return pick;
+}
+// 构造"现存 NPC 已占用"集合，供流动补位取名时避重名/近名
+function npcUsedSet(){
+  const used = new Set();
+  [...S.npcs.bosses, ...S.npcs.peers, ...S.npcs.subs, ...S.npcs.protgs].forEach(n=>{
+    used.add(n.name); used.add("s:"+n.name.charAt(0)); used.add("e:"+n.name.charAt(n.name.length-1));
+  });
+  return used;
+}
+function makeBossNpc(rank){
+  const T = NPC_TEMPLATES[Math.min(11,rank)].bosses;
+  const t = T[Math.floor(Math.random()*T.length)];
+  return makeNpc(pickName(npcUsedSet()), t.t, 40+Math.floor(Math.random()*10), 68+Math.floor(Math.random()*17), pickFaction());
+}
+function makePeerNpc(rank){
+  const T = NPC_TEMPLATES[Math.min(11,rank)].peers;
+  const t = T[Math.floor(Math.random()*T.length)];
+  return makeNpc(pickName(npcUsedSet()), t.t, 45+Math.floor(Math.random()*8), 60+Math.floor(Math.random()*21));
+}
+function makeSubNpc(rank){
+  const T = NPC_TEMPLATES[Math.min(11,rank)].subs;
+  const t = T[Math.floor(Math.random()*T.length)];
+  return makeNpc(pickName(npcUsedSet()), t.t, 45+Math.floor(Math.random()*8), 40+Math.floor(Math.random()*26));
+}
+function genNpcs(rank){
+  const T = NPC_TEMPLATES[Math.min(11,rank)];
+  const used = new Set();   // 同批名字去重：全名/姓/尾字全局唯一
+  const mk = (titleList, favLo, favHi, abLo, abHi, facFn) => titleList.map(t=>{
+    const name = pickName(used);
+    return makeNpc(name, t.t, favLo+Math.floor(Math.random()*(favHi-favLo+1)), abLo+Math.floor(Math.random()*(abHi-abLo+1)), facFn());
+  });
+  // 按模板逐一生成：同一职级的 NPC 职务不重复（不会出现两个县委书记/两个副局长），名字同批不重名不近名
+  const bosses = mk(T.bosses, 40, 49, 68, 84, pickFaction);
+  const peers = mk(T.peers, 45, 52, 60, 80, ()=>null);
+  const subs = mk(T.subs, 45, 52, 40, 65, ()=>null);
+  return { bosses, peers, subs, protgs:[] };
+}
+function protgName(){ return S.npcs.protgs.length ? S.npcs.protgs[0].name : "某干部"; }
+function topBossFav(){ return S.npcs.bosses.length ? Math.max(...S.npcs.bosses.map(b=>b.fav)) : 0; }
+
+/* ================= 工具 ================= */
+function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
+function addLog(msg){ S.log.unshift("【"+S.year+"年Q"+S.quarter+"】"+msg); if(S.log.length>80)S.log.pop(); }
+function fmt(v){ return Math.round(v); }
+function eduLevel(edu){
+  if(edu>=100) return "博士"; if(edu>=80) return "硕士"; if(edu>=60) return "本科"; if(edu>=30) return "大专"; return "高中";
+}
+function effMerit(){ return CONFIG.effOf(S.rank); }
+function subBonus(){
+  let m = 1.0;
+  if(S.npcs.subs.length){ const a=S.npcs.subs.reduce((s,x)=>s+x.ability,0)/S.npcs.subs.length; if(a>=80)m=1.10; else if(a>=60)m=1.05; }
+  if(S.npcs.protgs.some(p=>p.ability>=85)) m*=1.05;   // 能力过硬的骨干额外加成
+  return m;
+}
+function evalSupport(){
+  const base = S.rep*0.7 + S.rel*0.3;
+  let bonus = 0;
+  const t = topBossFav();
+  if(t>=70) bonus+=4; else if(t>=50) bonus+=2;         // 上级好感（取最支持你的关键领导）
+  if(S.npcs.peers.length){ const pa=S.npcs.peers.reduce((s,p)=>s+p.fav,0)/S.npcs.peers.length; if(pa>=60) bonus+=3; }  // 同级平均好感
+  bonus = Math.min(10, bonus + S.npcs.protgs.filter(p=>p.bossed).length*2);  // 每名处级以上高层盟友（下线）修正+2%
+  return Math.min(100, base+bonus);
+}
+
+/* ================= 渲染 ================= */
+const $ = id => document.getElementById(id);
+
+function renderHeader(){
+  $("post-name").textContent = S.postTitle + "（" + CONFIG.platformOf(S.rank) + "）";
+  $("post-meta").textContent = "第 "+S.year+" 年 · 第 "+S.quarter+" 季度 · 在职"+S.yearsInRank+"年";
+  $("phase-tip").innerHTML = '第 <b>'+S.year+'</b> 年 · 第 <b>'+S.quarter+'</b> 季度 · 剩余精力 <b>'+S.energy+' / 100</b> · 立场：<b>'+S.faction+'</b> · 选派系声望 <b>'+S.factionScore+'</b> · 路线：<b>'+(S.path==="党政"?"党政（党务）":"行政（政务）")+'</b>';
+}
+
+function renderStats(){
+  const bars = { merit:["v-merit","b-merit"], rep:["v-rep","b-rep"], rel:["v-rel","b-rel"], intg:["v-intg","b-intg"], health:["v-health","b-health"], edu:["v-edu","b-edu"] };
+  for(const k in bars){ $(bars[k][0]).textContent = fmt(S[k]); $(bars[k][1]).style.width = clamp(S[k],0,100)+"%"; }
+  $("p-name").textContent = S.name;
+  $("p-age").textContent = S.age + " 岁";
+  $("p-cat").textContent = S.cat + "类";
+  $("p-rank").textContent = CONFIG.ranks[S.rank].name + (CONFIG.ranks[S.rank].level ? " · " + CONFIG.ranks[S.rank].level : "");
+  $("p-faction").innerHTML = '<span class="faction-tag'+(S.faction==="中立"?" mid":"")+'">'+S.faction+'</span>';
+  $("p-exploit").textContent = S.exploit + " 次" + (S.majorExploit>0 ? " · 重大立功 " + S.majorExploit + " 次" : "");
+  $("v-edu").textContent = fmt(S.edu) + "（" + eduLevel(S.edu) + "）";
+  $("v-dangxiao").textContent = S.dangxiao + " 期";
+  // 资产显示（万元）
+  const wealth = "现金 " + Math.round(S.cash) + " 万" + (S.invest>0 ? " · 理财 " + Math.round(S.invest) + " 万" : "");
+  $("v-wealth").textContent = wealth;
+  let w2 = "房产 " + S.house + " 套" + (S.houses.length ? "（"+S.houses[S.houses.length-1].name+" 等）" : "") + (S.car ? " · "+S.car.brand : " · 无车") + " · 年收入 " + Math.round(salaryAnnual()) + " 万";
+  if(S.dirty > 0) w2 += ' <span style="color:var(--red);">· 有不明资产痕迹</span>';
+  $("v-wealth2").textContent = w2;
+  // 学历在读状态
+  const sr = $("v-study-row");
+  if(S.studyStatus){
+    sr.style.display = "";
+    $("v-study").textContent = "在读：" + S.studyStatus.label + "（" + S.studyStatus.school + " · " + S.studyStatus.major + "）" + S.studyStatus.progress + "/" + S.studyStatus.total + " 季度";
+  } else {
+    sr.style.display = "none";
+  }
+}
+
+function renderNpcs(){
+  const box = $("npc-list");
+  const favCls = f => f>=70?"ok" : f>=50?"warn" : "bad";
+  const row = (tag, n) => '<div class="npc"><div class="n-info"><b>'+tag+'</b> '+n.name+' · '+n.title+(n.faction?' <span style="color:var(--blue);">['+n.faction+']</span>':'')+'<br><span>能力'+n.ability+'</span></div><div class="n-fav"><b class="'+favCls(n.fav)+'">好感 '+n.fav+'</b></div></div>';
+  let html = "";
+  if(S.rank >= CONFIG.ranks.length-1){
+    html += '<div class="npc"><div class="n-info"><b>上级</b> 无 —— 你就是最大的那个人（国家元首）</div></div>';
+  } else {
+    S.npcs.bosses.forEach(b=> html += row("上级", b));
+  }
+  S.npcs.peers.forEach(p=> html += row("同级", p));
+  if(S.npcs.subs.length){
+    // 骨干（下线）与下属同一人：下属行不再重复显示，只在骨干行出现
+    const shown = S.npcs.subs.filter(s=>!s.isProtg);
+    shown.forEach(s=> html += row("下属", s));
+    if(!shown.length) html += '<div class="npc"><div class="n-info"><b>下属</b>（均为你的骨干，见骨干行）</div></div>';
+  }
+  else html += '<div class="npc"><div class="n-info"><b>下属</b> 暂无（职级尚低）</div></div>';
+  S.npcs.protgs.forEach(g=>{
+    const need = protgNeed(g.rank||0);
+    const tag = g.bossed?"盟友":(g.isProtg&&g.rank>0?"骨干·已提拔":"骨干");
+    // 无论是否已成为高层盟友，都持续显示晋升进度（bossed 后照样能继续扶持往上走）
+    const extra = g.rank>=CONFIG.ranks.length-1 ? ' · 已达国家主席' : ' · 晋升进度 '+g.progress+'/'+need;
+    html += '<div class="npc"><div class="n-info"><b>'+tag+'</b> '+g.name+' · '+g.title+(g.faction?' <span style="color:var(--blue);">['+g.faction+']</span>':'')+'<br><span>能力'+g.ability+extra+'</span></div><div class="n-fav"><b class="'+favCls(g.fav)+'">好感 '+g.fav+'</b></div></div>';
+  });
+  box.innerHTML = html || '<div style="font-size:11px;color:var(--faint);">人脉圈空</div>';
+}
+
+function renderPromotion(){
+  const box = $("promo-list");
+  if(S.rank >= CONFIG.ranks.length-1){ box.innerHTML = '<div style="font-size:12px;color:var(--green);">已达最高职级（国家主席）</div>'; $("btn-review").disabled = true; return; }
+  const c = CONFIG.promote[S.rank];
+  const next = CONFIG.ranks[S.rank+1].name;
+  const nextLevel = CONFIG.ranks[S.rank+1].level||"";
+  const evalOk = S.evalHistory.slice(-3).filter(e=>e==="优秀").length >= 1;
+  const repNow = evalSupport();
+  let needYears = c.years;
+  if(S.exploit>0 && c.years>2) needYears = c.years-1;   // 普通立功提前晋升预览
+  const majorOk = S.majorExploit>0;                     // 重大立功：一次性使用，直接晋升（不要求其他条件）
+  const yearsOk = S.yearsInRank>=needYears || majorOk;
+  const rows = [
+    { label:"任职年限（"+c.years+"年"+(S.exploit>0&&c.years>2?"，立功-1":"")+(majorOk?"，重大立功可直接晋升":"")+"）", ok:yearsOk, val:S.yearsInRank+"年"+(majorOk?"·重大立功":"") },
+    { label:"累计政绩（"+c.merit+"）", ok:S.merit>=c.merit || majorOk, val:fmt(S.merit) },
+    { label:"近3年优秀（≥1次）", ok:evalOk || majorOk, val:"" },
+    { label:"民主测评（"+c.eval+"%）", ok:repNow>=c.eval || majorOk, val:fmt(repNow)+"%" },
+    { label:"学历（"+c.edu+" · "+(c.edu>=100?"博士":c.edu>=80?"硕士":c.edu>=60?"本科":"大专")+"）", ok:S.edu>=c.edu || majorOk, val:fmt(S.edu)+"·"+eduLevel(S.edu) }
+  ];
+  if(c.age<99) rows.push({ label:"年龄（≤"+c.age+"岁）", ok:S.age<=c.age || majorOk, val:S.age+"岁" });
+  if(S.rank>=4){ rows.push({ label:"党校（≥2期）", ok:S.dangxiao>=8 || majorOk, val:(S.dangxiao/4)+"期" }); }
+  if(S.rank>=5){ rows.push({ label:"派系背书/中立（≥50）", ok:S.factionScore>=50 || majorOk, val:S.factionScore }); }
+  if(S.rank>=8){ rows.push({ label:"国家级重大政绩（≥3）", ok:S.majorCount>=3 || majorOk, val:S.majorCount+"次" }); }
+  box.innerHTML = '<div style="font-size:11.5px;color:var(--faint);margin-bottom:7px;">晋升目标：'+next+'（'+nextLevel+' · '+CONFIG.platformOf(S.rank+1)+'）'+(majorOk?'<br><span style="color:var(--green);">★ 重大立功在手：其余条件全部视作满足，可直接破格晋升（仅此一次）</span>':'')+'</div>' +
+    rows.map(r=>'<div class="promo-item"><span>'+(r.ok?'<b class="ok">✓</b> ':'<b class="no">✗</b> ')+r.label+'</span><b class="'+(r.ok?'ok':'no')+'">'+r.val+'</b></div>').join("");
+  const allOk = majorOk || rows.every(r=>r.ok);
+  S.reviewAllowed = allOk;
+  const btn = $("btn-review");
+  btn.disabled = !allOk || S.reviewUsed;
+  btn.textContent = majorOk ? "重大立功 · 申请破格晋升" : (allOk ? "申请组织考察" : "条件未满足");
+}
+
+function renderActions(){
+  const box = $("actions");
+  box.innerHTML = "";
+  for(const k of Object.keys(CONFIG.actions)){
+    const a = CONFIG.actions[k];
+    const locked = k==="protg" && S.rank<2;   // 发展下线：二级主任科员起解锁
+    if(locked) continue;   // 未解锁不显示
+    // 党政路线专属行动；行政路线不显示党务专属行动
+    if(S.path!=="党政" && (k==="party"||k==="cadre")) continue;
+    // 升学按钮：学历点达标（当前层级+10）、未在读、还有下一级学历可升 才可用
+    let disabled = false, label = a.name, desc = a.desc, note = a.note;
+    if(k === "exam"){
+      const nextKey = S.studyStatus ? null : nextStudyKey();
+      if(!nextKey || S.edu < (parseInt(nextKey)+10)){ disabled = true; note = "学历点需≥" + (nextKey? parseInt(nextKey)+10 : 90) + " 才可报考"; }
+      if(S.studyStatus) note = "在读中，毕业后可报考下一级";
+      desc = "学历点达标后可报考" + (nextStudyKey()? CONFIG.studyNeed[nextStudyKey()].label : "最高学历") + "（答对越多学校越好，专业决定发展方向）";
+    }
+    if(k === "study" && S.studyStatus){
+      label = "在职进修";
+      desc = "推进在读学历进度（+2/季度，教育岗位更快）";
+      note = "在读进度 " + S.studyStatus.progress + "/" + S.studyStatus.total;
+    }
+    // 党政路线行动覆盖（换皮换效）
+    if(S.path==="党政" && CONFIG.partyOverrides[k]){
+      label = CONFIG.partyOverrides[k].name;
+      desc = CONFIG.partyOverrides[k].desc;
+      note = CONFIG.partyOverrides[k].note;
+    }
+    const can = S.energy >= a.cost && !S.quarterDone && !locked && !disabled;
+    const div = document.createElement("div");
+    div.className = "action" + (can?"":" disabled");
+    div.innerHTML = '<span class="a-cost">精力'+a.cost+'</span><div class="a-name">'+label+'</div><div class="a-desc">'+desc+'</div><div class="a-tags">'+note+'</div>';
+    if(can) div.onclick = ()=>doAction(k);
+    box.appendChild(div);
+  }
+  const end = document.createElement("div");
+  end.className = "action";
+  end.style.borderColor = "var(--red)";
+  end.style.gridColumn = "1 / -1";
+  end.innerHTML = '<div class="a-name" style="color:var(--red);">结束本季度 →</div><div class="a-desc">进入下一季度或年度考核</div>';
+  end.onclick = ()=>endQuarter();
+  box.appendChild(end);
+}
+
+function renderEvent(ev){
+  $("event-box").classList.remove("hidden");
+  const box = $("event-box");
+  const badge = ev.cat==="天灾" ? "天灾" : ev.cat;
+  box.innerHTML = '<div class="ev-title">■ 事件 · '+badge+'</div><div class="ev-text">'+ev.text+'</div>';
+  ev.opts.forEach((o,i)=>{
+    const b = document.createElement("button");
+    b.className = "ev-opt" + (o.risk ? " danger" : "");
+    b.innerHTML = o.t + '<small>'+o.note+(o.risk?"　⚠ "+o.risk:"")+'</small>';
+    b.onclick = ()=>resolveEvent(ev, i);
+    box.appendChild(b);
+  });
+}
+
+function renderResult(title, lines, cta, ctaFn, up){
+  const box = $("result-box");
+  box.classList.remove("hidden");
+  box.innerHTML = '<div class="r-title '+(up?'up':'flat')+'">'+title+'</div>'+lines+'';
+  const btn = document.createElement("button");
+  btn.className = "btn";
+  btn.textContent = cta;
+  btn.onclick = ctaFn;
+  box.appendChild(btn);
+  box.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+/* 选岗界面 */
+function renderPostSelect(rank){
+  const box = $("result-box");
+  box.classList.remove("hidden");
+  const candidates = CONFIG.pickPosts(rank);
+  S.pendingPosts = candidates;
+  let cards = "";
+  for(let i=0;i<candidates.length;i++){
+    const p = candidates[i];
+    const mod = CONFIG.postMods[p.focus] || CONFIG.postMods["综合"];
+    cards += '<div class="post-card" data-idx="'+i+'"><div class="pc-name">'+p.t+'</div>'+
+      '<div class="pc-focus">类别：'+p.focus+'</div><div class="pc-bonus">'+mod.note+'</div></div>';
+  }
+  box.innerHTML = '<div class="r-title up">✦ 组织考察通过 · 岗位选择</div>'+
+    '<div class="result-line">晋升职级：'+CONFIG.ranks[rank].name+(CONFIG.ranks[rank].level?'（'+CONFIG.ranks[rank].level+'）':'')+' · 民主测评支持率 <b>'+fmt(S.lastSupport)+'%</b>（门槛 '+CONFIG.promote[rank-1].eval+'%）· 实绩核查通过 · 组织谈话顺利</div>'+
+    '<div class="result-line" style="color:var(--sub);">组织从备选岗位库中推荐以下 3 个岗位，请选择赴任（岗位类别影响产出与人脉；党务岗需党校经历，你已完成 '+S.dangxiao+' 期党校培训'+(S.path==="党政"?"，当前在党政路线":"")+'）</div>'+
+    cards;
+  box.querySelectorAll(".post-card").forEach(c=>{
+    c.onclick = ()=>{ applyPost(parseInt(c.dataset.idx)); };
+  });
+}
+
+function applyPost(idx){
+  const p = S.pendingPosts[idx];
+  const mod = CONFIG.postMods[p.focus] || CONFIG.postMods["综合"];
+  S.postFocus = p.focus;
+  S.postTitle = p.t;
+  S.postIdx = CONFIG.ranks[S.rank].posts.findIndex(x=>x.t===p.t);
+  if(S.postIdx<0) S.postIdx = 0;
+  // 党务岗 → 转入党政路线（行动集切换）；行政岗 → 回归行政路线
+  if(p.focus === "党务"){
+    const was = S.path;
+    S.path = "党政";
+    if(was !== "党政") addLog("你走上党政路线——任职党务岗位，行动选项已切换（党建调研/干部考察/组织生活等）");
+  } else if(S.path === "党政"){
+    S.path = "行政";
+    addLog("由党务岗转任行政岗，行动选项切回行政路线");
+  }
+  if(mod.intg) S.intg = clamp(S.intg + mod.intg, 0, 100);
+  // 个人履历：结算上一岗位任职年限，记录本次晋升（岗位/年份/晋升原因）
+  const lastJob = S.career[S.career.length-1];
+  lastJob.years = S.year - lastJob.startYear;
+  S.career.push({ title:p.t, focus:p.focus, startYear:S.year, startAge:S.age, years:0, reason:S.lastPromoReason||"组织提拔" });
+  const oldProtgs = S.npcs.protgs || [];   // 下线（内部人）随你走，班子其他成员换新
+  S.npcs = genNpcs(S.rank);
+  S.npcs.protgs = oldProtgs;
+  addLog("晋升赴任『"+p.t+"』（类别："+p.focus+"），"+mod.note+"；新班子就位");
+  $("result-box").classList.add("hidden");
+  renderAll();
+}
+
+/* 退休决策：三选项（按时退休 / 弹性延退 / 自愿提前退休），按年龄窗口出现 */
+function renderRetireDecision(mode){
+  const box = $("result-box");
+  box.classList.remove("hidden");
+  const canDelay = S.health>=60 && S.intg>=60;
+  const titles = { early:"退休决策 · 自愿提前 · "+S.age+" 岁", normal:"退休决策 · "+S.age+" 岁（法定 60）", delayed:"退休决策 · 弹性延退中 · "+S.age+" 岁" };
+  let lines = '';
+  if(mode==="early"){
+    lines = '<div class="result-line">你已年满 '+S.age+' 岁、工作年限满 30 年，依《公务员法》可<b>自愿申请提前退休</b>（弹性提前下限 57 岁）；也可以继续工作，等待法定退休年龄。</div>';
+  } else if(mode==="normal"){
+    lines = '<div class="result-line">你已年满法定退休年龄 <b>60 岁</b>（男公务员法定退休年龄）。</div>'+
+      '<div class="result-line">依《实施弹性退休制度暂行办法》，可申请<b>弹性延迟退休，最多延后 3 年（至 63 岁）</b>，需组织批准（健康≥60、廉政≥60）；也可按规定退休，或自愿提前退休。当前：健康 '+fmt(S.health)+' · 廉政 '+fmt(S.intg)+'。</div>';
+  } else {
+    lines = '<div class="result-line">你处于弹性延退期（已延至 '+S.age+' 岁）。可继续延退至 <b>63 岁</b>（延迟期间每年健康-4），或现在办理退休。</div>';
+  }
+  box.innerHTML = '<div class="r-title flat">'+titles[mode]+'</div>'+lines;
+  const mk = (txt, cls, fn) => { const b=document.createElement("button"); b.className="btn "+(cls||""); b.textContent=txt; b.onclick=fn; box.appendChild(b); return b; };
+  if(mode==="early"){
+    mk("继续工作", "", ()=>{ $("result-box").classList.add("hidden"); renderAll(); });
+    mk("自愿提前退休（工龄满30年）", "ghost", ()=>{ S.retired=true; S.exitReason="本人自愿申请提前退休（工作年限满30年）"; renderFinal(); });
+  } else if(mode==="normal"){
+    mk("按规定办理退休（60 岁）", "", ()=>{ S.retired=true; S.exitReason="年满法定退休年龄，按规定办理退休"; renderFinal(); });
+    if(canDelay){
+      mk("申请弹性延迟退休（延至 63 岁）", "", ()=>{ S.retireDecided=true; addLog("组织批准弹性延迟退休至 63 岁（延迟期间每年健康-4）"); $("result-box").classList.add("hidden"); renderAll(); });
+    } else {
+      const n = document.createElement("div"); n.className="result-line"; n.style.color="var(--faint)"; n.style.fontSize="11px"; n.textContent="（健康或廉政未达标，暂无法申请弹性延退）"; box.appendChild(n);
+    }
+    mk("自愿提前退休（工龄满30年）", "ghost", ()=>{ S.retired=true; S.exitReason="本人自愿申请提前退休（工作年限满30年）"; renderFinal(); });
+  } else {
+    mk("继续延退（至 63 岁）", "", ()=>{ $("result-box").classList.add("hidden"); renderAll(); });
+    mk("现在办理退休", "ghost", ()=>{ S.retired=true; S.exitReason="弹性延退期间本人申请办理退休"; renderFinal(); });
+  }
+}
+
+function renderFinal(){
+  const box = $("final-box");
+  box.classList.remove("hidden");
+  $("result-box").classList.add("hidden");
+  $("event-box").classList.add("hidden");
+  const final = CONFIG.ranks[S.rank].name;
+  const tip = S.rank>=10 ? "国家元首，最高荣誉" : S.rank>=9 ? "正国级，国之重器" : S.rank>=7 ? "位高权重，功成名就" : S.rank>=5 ? "一方大员，实属栋梁" : S.rank>=3 ? "勤恳为民，问心无愧" : S.rank>=1 ? "守土尽责，初心未改" : "岁月静好，平凡亦是本真";
+  const exitHtml = S.exitReason ? '<div class="exit-reason">退出说明：'+S.exitReason+'</div>' : "";
+  // 个人履历：结算最后一段任职年限
+  const lastJob = S.career[S.career.length-1];
+  lastJob.years = S.year - lastJob.startYear;
+  const careerHtml = '<div style="margin:16px 0 6px;text-align:left;">'+
+    '<div style="font-size:13.5px;font-weight:600;color:var(--red);letter-spacing:3px;margin-bottom:9px;border-bottom:1px solid var(--line);padding-bottom:6px;">个 人 履 历</div>'+
+    S.career.map(c=>{
+      const endY = c.years>0 ? (c.startYear+c.years-1) : S.year;
+      return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dashed #F0EBE0;padding:5px 2px;">'+
+        '<span style="color:var(--sub);white-space:nowrap;">第'+c.startYear+'年－第'+endY+'年</span>'+
+        '<span style="text-align:right;"><b>'+c.title+'</b>（'+c.focus+'类）</span>'+
+        '<span style="color:var(--faint);white-space:nowrap;">'+(c.years>0?c.years+' 年 · ':'')+c.reason+'</span></div>';
+    }).join("")+'</div>';
+  box.innerHTML = '<h2>退休 · 卸任</h2>'+exitHtml+'<div class="final-rank">最终职级：'+final+'</div><p>'+S.name+'，'+S.age+' 岁，从基层一路走来，'+(S.rank>0?'共晋升 '+S.rank+' 次。':'虽未获擢升，亦守土尽责。')+'</p>'+
+    careerHtml+
+    '<p style="color:var(--faint);">'+tip+'</p>'+
+    '<button class="btn" onclick="restart()">再赴新征程</button><button class="btn ghost" style="margin-left:10px;" onclick="location.reload()">重新开始</button>';
+}
+
+function renderLog(){
+  const box = $("log");
+  box.innerHTML = '<h3>履职日志</h3>' + S.log.map(m=>'<p>'+m+'</p>').join("");
+}
+
+function renderAll(){
+  renderHeader(); renderStats(); renderNpcs(); renderPromotion(); renderActions(); renderLog();
+}
+
+/* ================= 核心逻辑 ================= */
+function majorBonus(){
+  // 专业方向匹配当前岗位 → 政绩额外+10%（专业对发展方向很关键）
+  return (S.majorFocus && S.majorFocus === S.postFocus) ? 1.10 : 1.0;
+}
+function salaryAnnual(){
+  return CONFIG.salaryBase[S.rank] * 12 * (CONFIG.platformPay[CONFIG.platformOf(S.rank)] || 1.0);
+}
+// ---- 升学考试：专升本2年/本升硕3年/硕升博3年，答题录取选专业 ----
+function nextStudyKey(){
+  if(S.studyStatus) return null;
+  if(S.edu < 60) return "40";
+  if(S.edu < 80) return "60";
+  if(S.edu < 100) return "80";
+  return null;
+}
+function checkStudyGraduate(){
+  const st = S.studyStatus;
+  if(!st || st.progress < st.total) return false;
+  S.edu = st.target;
+  S.majorFocus = st.majorFocus;
+  addLog("★★ 完成"+st.label+"（"+st.school+"）学业，获"+st.degree+"学历（学历 "+fmt(S.edu)+"）");
+  const m = CONFIG.majors.find(x=>x.name===st.major);
+  if(m) addLog("专业方向："+st.major+"（"+m.focus+"类）——匹配岗位时政绩额外+10%，专业决定发展方向");
+  S.studyStatus = null;
+  renderAll();
+  return true;
+}
+function startExam(){
+  const key = nextStudyKey();
+  if(!key){ addLog("暂无升学机会（学历已达最高或正在就读）"); renderAll(); return; }
+  const need = parseInt(key)+10;
+  if(S.edu < need){ addLog("学历 "+fmt(S.edu)+" 未达报考门槛 "+need+"，先静心备考（学习备考+12/季度）"); renderAll(); return; }
+  const qs = CONFIG.examQuestions.slice().sort(()=>Math.random()-0.5).slice(0,3);
+  S.examState = { key, qs, idx:0, score:0 };
+  renderExam();
+}
+function renderExam(){
+  const st = S.examState;
+  const box = $("result-box");
+  box.classList.remove("hidden");
+  const q = st.qs[st.idx];
+  const need = CONFIG.studyNeed[st.key];
+  box.innerHTML = '<div class="r-title up">✎ 升学考试 · '+need.label+'（第 '+(st.idx+1)+' / 3 题）</div>'+
+    '<div class="result-line" style="font-size:13px;line-height:1.6;">'+q.q+'</div>';
+  q.opts.forEach((o,i)=>{
+    const b = document.createElement("button");
+    b.className = "ev-opt";
+    b.innerHTML = o;
+    b.onclick = ()=>examAnswer(i);
+    box.appendChild(b);
+  });
+  box.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+function examAnswer(i){
+  const st = S.examState;
+  if(st.qs[st.idx].a === i) st.score++;
+  st.idx++;
+  if(st.idx < 3){ renderExam(); return; }
+  const school = st.score>=3 ? "985 名校" : st.score>=2 ? "省属重点" : st.score>=1 ? "普通院校" : null;
+  if(!school){
+    addLog("升学考试落榜（答对 0 题）——下次再战，备考更扎实些");
+    S.examState = null; S.eventThisQuarter = true;
+    $("result-box").classList.add("hidden");
+    renderAll(); return;
+  }
+  S.examState.school = school;
+  renderMajorChoice(st);
+}
+function renderMajorChoice(st){
+  const box = $("result-box");
+  const need = CONFIG.studyNeed[st.key];
+  box.innerHTML = '<div class="r-title up">录取 · '+st.school+' · 选择专业（决定发展方向）</div>'+
+    '<div class="result-line">你以 '+st.score+'/3 的成绩被'+st.school+'录取，攻读'+need.label+'（学制 '+need.total+' 季度 ≈ '+need.total/4+' 年）。专业与岗位匹配时政绩额外+10%。</div>';
+  let majors = CONFIG.majors.slice();
+  if(st.school==="省属重点") majors = majors.filter(m=>["行政管理","产业经济学","法学","公共事业管理"].includes(m.name));
+  if(st.school==="普通院校") majors = majors.filter(m=>["行政管理","公共事业管理"].includes(m.name));
+  majors.forEach(m=>{
+    const b = document.createElement("button");
+    b.className = "ev-opt";
+    b.innerHTML = m.name + '<small>发展方向：'+m.focus+'类岗位政绩+10%</small>';
+    b.onclick = ()=>{
+      S.studyStatus = { label:need.label, target:need.target, total:need.total, progress:0, school:st.school, major:m.name, majorFocus:m.focus };
+      addLog("录取！以 "+st.score+"/3 考入"+st.school+"，攻读"+need.label+"，专业："+m.name+"（在读约"+need.total/4+" 年，可做「在职进修」加速）");
+      S.examState = null; S.eventThisQuarter = true;
+      $("result-box").classList.add("hidden");
+      renderAll();
+    };
+    box.appendChild(b);
+  });
+  box.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+// ---- 资产核查：不明资产超阈值可能被查，没收并处分 ----
+function checkWealthAudit(){
+  const ann = salaryAnnual();
+  if(S.dirty <= ann*CONFIG.auditMult) return;
+  if(Math.random() > 0.25) return;   // 每季度 25% 被查概率（一直高风险迟早被查）
+  S.wealthChecks++;
+  const severe = S.dirty >= ann*CONFIG.auditMult*2.5 || S.violation;
+  const seized = Math.min(S.cash, S.dirty);
+  S.cash -= seized;
+  S.dirty = Math.max(0, S.dirty - seized);
+  S.intg = clamp(S.intg - (severe?25:15), 0, 100);
+  if(severe){ S.violation = true; S.rep = clamp(S.rep-10,0,100); }
+  addLog("⚠ 纪委对你开展资产核查（第 "+S.wealthChecks+" 次）：查明并没收不明资产 "+fmt(seized)+" 万"+(severe?"，认定违规情节严重，记违纪、通报批评":"，诫勉谈话责令说明来源"));
+  const lines = '<div class="result-line" style="color:var(--red);">第 '+S.wealthChecks+' 次资产核查</div>'+
+    '<div class="result-line">查明不明资产 <b>'+fmt(seized)+' 万</b>，全部没收；廉政-'+(severe?25:15)+(severe?'；记违纪记录，影响后续考察与晋升（严重时双开）':'；诫勉谈话')+'。</div>'+
+    '<div class="result-line" style="color:var(--sub);">提示：收受的礼金会在账上留痕，可用"做账洗白"行动把可疑资产做成合法来源，防患于未然。</div>';
+  renderResult("🛡 组织核查", lines, "继续履职", ()=>{ $("result-box").classList.add("hidden"); });
+}
+function doAction(key){
+  const a = CONFIG.actions[key];
+  if(S.energy < a.cost || S.quarterDone) return;
+  S.energy -= a.cost;
+  S.yearActions++;
+  // ---- 资产类行动 ----
+  if(key === "buyhouse"){
+    const plat = CONFIG.platformOf(S.rank);
+    const base = CONFIG.houseCost[plat] || 60;
+    const names = CONFIG.houseNames[plat] || CONFIG.houseNames["县"];
+    const box = $("result-box");
+    box.classList.remove("hidden");
+    box.innerHTML = '<div class="r-title up">🏠 购房置业 · '+plat+'（基准价 '+base+' 万/套）</div>'+
+      '<div class="result-line" style="color:var(--sub);">选择小区档次（影响居住品质与资产价值）：</div>';
+    ["普通","中档","高档"].forEach(tier=>{
+      const cost = Math.round(base * CONFIG.houseTiers[tier].mult);
+      const b = document.createElement("button");
+      b.className = "ev-opt";
+      b.innerHTML = names[tier] + '<small>' + ({普通:"普通",中档:"中档",高档:"高档"}[tier]||tier) + ' · ' + cost + ' 万（现金 ' + fmt(S.cash) + ' 万）</small>';
+      b.onclick = ()=>{
+        if(S.cash < cost){ addLog("现金不足 "+cost+" 万，买不起"+names[tier]); $("result-box").classList.add("hidden"); renderAll(); return; }
+        S.cash -= cost; S.house++; S.houses.push({name:names[tier], cost, plat});
+        addLog("购置"+names[tier]+"（"+plat+"·"+tier+"档，"+cost+" 万），现有房产 "+S.house+" 套");
+        $("result-box").classList.add("hidden");
+        renderAll();
+      };
+      box.appendChild(b);
+    });
+    return;
+  }
+  if(key === "buycar"){
+    if(S.car){ addLog("家中已有一辆车（"+S.car.brand+"），暂无需再购"); renderAll(); return; }
+    const box = $("result-box");
+    box.classList.remove("hidden");
+    box.innerHTML = '<div class="r-title up">🚗 购车代步</div><div class="result-line" style="color:var(--sub);">选择品牌档次：</div>';
+    Object.keys(CONFIG.carBrands).forEach(k=>{
+      const bd = CONFIG.carBrands[k];
+      const b = document.createElement("button");
+      b.className = "ev-opt";
+      b.innerHTML = bd.name + '<small>' + ({经济:"经济型",中档:"中档",高档:"高档"}[k]||k) + ' · ' + bd.cost + ' 万（现金 ' + fmt(S.cash) + ' 万）</small>';
+      b.onclick = ()=>{
+        if(S.cash < bd.cost){ addLog("现金不足 "+bd.cost+" 万，买不起"+bd.name); $("result-box").classList.add("hidden"); renderAll(); return; }
+        S.cash -= bd.cost; S.car = {brand:bd.name, cost:bd.cost};
+        addLog("购得"+bd.name+"（"+k+"档，"+bd.cost+" 万），通勤体面，资产账目清晰");
+        $("result-box").classList.add("hidden");
+        renderAll();
+      };
+      box.appendChild(b);
+    });
+    return;
+  }
+  if(key === "invest"){
+    const amount = 50;
+    if(S.cash < amount){ S.energy += a.cost; addLog("现金不足 "+amount+" 万，理财门槛 50 万起"); renderAll(); return; }
+    S.cash -= amount; S.invest += amount;
+    addLog("投入 "+amount+" 万购买稳健理财产品（理财本金累计 "+S.invest+" 万，每季度结算收益约2%±3%）");
+    renderAll(); return;
+  }
+  if(key === "donate"){
+    const amount = 10;
+    if(S.cash < amount){ S.energy += a.cost; addLog("现金不足 "+amount+" 万，捐赠下限 10 万"); renderAll(); return; }
+    S.cash -= amount;
+    S.rep = clamp(S.rep+3,0,100); S.intg = clamp(S.intg+1,0,100);
+    addLog("以个人名义捐资助学 "+amount+" 万，口碑+3 · 廉政+1（合法资产使用途径）");
+    renderAll(); return;
+  }
+  if(key === "wash"){
+    if(S.dirty <= 0){ addLog("账目往来本无异常，无需打理"); return; }
+    const fee = Math.round(S.dirty * CONFIG.washCostMult);
+    if(S.cash < fee){ S.energy += a.cost; addLog("现金不足 "+fee+" 万，洗白费用凑不齐"); return; }
+    S.cash -= fee;
+    addLog("请资深会计理顺账目，花 "+fee+" 万把可疑收入做成合法来源（理财收益/亲属赠与），账目清白，隐患消除");
+    S.dirty = 0;
+    renderAll(); return;
+  }
+  // ---- 升学考试 ----
+  if(key === "exam"){ startExam(); return; }
+  // ---- 升学在读期间：学习备考 → 在职进修（推进在读进度）----
+  if(key === "study" && S.studyStatus){
+    const st = S.studyStatus;
+    st.progress = Math.min(st.total, st.progress + 2);
+    const extra = S.postFocus === "教育" ? 2 : 0;
+    st.progress = Math.min(st.total, st.progress + extra);
+    S.edu = clamp(S.edu + 2, 0, 100);
+    addLog("在职进修『"+st.label+"』：在读进度 "+st.progress+"/"+st.total+(st.progress>=st.total?"（即将毕业）":""));
+    checkStudyGraduate();
+    renderAll();
+    return;
+  }
+  let postMult = (CONFIG.postMods[S.postFocus]||{}).merit || 1.0;
+  if(a.merit){
+    const gain = a.merit * effMerit() * postMult * S.facMult * subBonus() * majorBonus();
+    S.merit += gain; S.lastYearMerit += gain;
+  }
+  if(a.rep){ let g=a.rep + S.facRepBonus + ((CONFIG.postMods[S.postFocus]||{}).rep||0); S.rep = clamp(S.rep+g,0,100); }
+  if(a.rel){ let g=a.rel + ((CONFIG.postMods[S.postFocus]||{}).rel||0); S.rel = clamp(S.rel+g,0,100); }
+  if(a.intg) S.intg = clamp(S.intg+a.intg,0,100);
+  if(a.edu){ let g=a.edu + S.facEduBonus + ((CONFIG.postMods[S.postFocus]||{}).edu||0); S.edu = clamp(S.edu+g,0,100); }
+  if(a.health) S.health = clamp(S.health+a.health,0,100);
+  if(a.dangxiao){ S.dangxiao += a.dangxiao; if(S.dangxiao%4===0){ addLog("完成一期党校培训（累计"+S.dangxiao/4+"期）——党校经历解锁党务岗任职资格（可走党政路线）"); S.rel = clamp(S.rel+3,0,100); } }
+  if(a.boss) S.npcs.bosses.forEach(b=>b.fav=clamp(b.fav+a.boss,0,100));
+  if(a.peerRel) S.npcs.peers.forEach(p=>p.fav=clamp(p.fav+a.peerRel,0,100));
+  if(a.sub) S.npcs.subs.forEach(s=>s.ability=clamp(s.ability+a.sub,0,100));
+  if(a.subFav) S.npcs.subs.forEach(s=>s.fav=clamp(s.fav+a.subFav,0,100));
+  if(a.protg){
+    if(!S.npcs.protgs.length){
+      if(S.npcs.subs.length){
+        const s = S.npcs.subs.reduce((x,y)=> x.ability>=y.ability?x:y);
+        s.isProtg = true; s.progress = 0; s.rank = 0; s.bossed = false;  // 同引用：骨干就是这名下属本人
+        S.npcs.protgs.push(s);
+        addLog("你将下属"+s.name+"（"+s.title+"）确定为骨干培养对象——你的内部人，可长期扶持（好感/能力与下属同源）");
+      }
+    } else {
+      const g = S.npcs.protgs[0];
+      g.ability = clamp(g.ability+5,0,100); g.fav = clamp(g.fav+8,0,100); g.progress++;
+      const need = protgNeed(g.rank||0);
+      addLog("扶持骨干"+g.name+"（"+g.title+"）：能力+5 · 好感+8 · 晋升进度 "+g.progress+"/"+need+(g.progress>=need&&g.ability>=70?"（可获提拔）":""));
+      checkProtgPromote();
+    }
+  }
+  addLog("完成『"+a.name+"』"+(a.note?"（"+a.note+"）":""));
+  // 事件触发
+  let trigger = 0.30;
+  if(S.intg < 60) trigger = 0.30 + 0.30;
+  if(!S.eventThisQuarter && Math.random() < trigger){
+    S.eventThisQuarter = true;
+    const plat = CONFIG.platformOf(S.rank);
+    // 重大立功稀有事件：特大灾害（约3%/季度触发机会，终身仅1次）
+    if(S.majorExploit < 1 && Math.random() < 0.03){
+      renderEvent(CONFIG.majorEvents()[0]);
+      renderAll();
+      return;
+    }
+    // 收礼事件（动态生成：送礼人/目的/礼品/价值，执法岗概率更高）
+    if(Math.random() < (S.postFocus==="执法" ? 0.45 : 0.25)){
+      renderEvent(CONFIG.giftEvent());
+      renderAll();
+      return;
+    }
+    let evPool = CONFIG.events(plat);
+    // 执法岗位权力集中，廉政风险事件出现概率显著上升（不直接扣廉政，由事件选项体现）
+    if(S.postFocus === "执法" && Math.random() < 0.40){
+      const lz = CONFIG.events(plat).filter(e=>e.cat==="廉政");
+      if(lz.length) evPool = lz;
+    }
+    // 上级帮扶：维护上级好感≥70 时，上级反过来帮你（优先于常规事件）
+    if(topBossFav()>=70 && Math.random() < 0.30){
+      const h = CONFIG.helpEvents();
+      evPool = h;
+    }
+    const ev = evPool[Math.floor(Math.random()*evPool.length)];
+    renderEvent(ev);
+  }
+  renderAll();
+}
+
+function resolveEvent(ev, idx){
+  const o = ev.opts[idx];
+  const r = o.r || {};
+  if(r.merit){ const g=r.merit*effMerit()*((CONFIG.postMods[S.postFocus]||{}).merit||1)*S.facMult; S.merit+=g; S.lastYearMerit+=g; }
+  if(r.rep) S.rep = clamp(S.rep+r.rep+S.facRepBonus,0,100);
+  if(r.rel) S.rel = clamp(S.rel+r.rel,0,100);
+  if(r.intg) S.intg = clamp(S.intg+r.intg,0,100);
+  if(r.cash){ S.cash += r.cash; if(r.dirty) S.dirty += r.dirty; }  // 收礼：现金入账，同额记入不明资产留痕
+  if(r.edu){ S.edu = clamp(S.edu+r.edu+S.facEduBonus,0,100); }
+  if(r.health) S.health = clamp(S.health+r.health,0,100);
+  if(r.dangxiao) S.dangxiao += r.dangxiao;
+  if(r.violation) S.violation = true;
+  if(r.exploit){
+    if(S.exploit < 2){  // 终身立功次数上限2次
+      S.exploit += 1;
+      S.lastExploitYear = S.year;
+      addLog("★ 天灾处置立功！立功记录+1（可提前晋升：任职年限-1，终身限2次）");
+    } else {
+      addLog("天灾处置得当（立功名额已用尽，记政绩与口碑）");
+    }
+  }
+  if(r.majorExploit){
+    if(S.majorExploit < 1){  // 重大立功终身仅 1 次（极稀有）
+      S.majorExploit += 1;
+      addLog("★★ 重大立功！特大灾害处置得当，可直接破格晋升一级（终身仅此一次，用后即止）");
+    }
+  }
+  if(r.faction) S.factionScore = clamp(S.factionScore+r.faction,0,100);
+  if(r.bossFav) S.npcs.bosses.forEach(b=>b.fav=clamp(b.fav+r.bossFav,0,100));
+  if(r.protgFav && S.npcs.protgs.length) S.npcs.protgs.forEach(g=>g.fav=clamp(g.fav+r.protgFav,0,100));
+  if(r.evalBoost) S.evalBoost += r.evalBoost;
+  if(r.factionJoin && S.faction==="中立"){
+    const recruiter = S.npcs.bosses.find(b=>b.faction) || S.npcs.bosses[0];
+    const fac = recruiter && recruiter.faction ? recruiter.faction : "实干派";
+    const fm = { "实干派":{meritMult:1.25}, "民生派":{repBonus:4}, "学术派":{eduBonus:10} }[fac] || {};
+    S.faction = fac;
+    S.facMult = fm.meritMult||1.0; S.facRepBonus = fm.repBonus||0; S.facEduBonus = fm.eduBonus||0;
+    // 加入派系即获得派系资源帮衬：一次性大幅政绩（派系给你对接项目、铺路搭桥）
+    const facMerit = Math.round(150 * effMerit() * ((CONFIG.postMods[S.postFocus]||{}).merit||1) * S.facMult);
+    S.merit += facMerit; S.lastYearMerit += facMerit;
+    addLog("你接受了上级"+recruiter.name+"的邀请，加入"+fac+"——派系为你对接项目资源、铺路搭桥，政绩+"+facMerit+"（其系加成生效："+(fm.meritMult?"政绩×"+fm.meritMult:fm.repBonus?"口碑+4":fm.eduBonus?"学历+10":"")+"）");
+  }
+  if(r.accountability){
+    // 问责免职：合理退出路径——降一级，继续履职
+    if(S.rank>0){
+      S.rank--; S.yearsInRank = 0;
+      addLog("问责处理：因重大事故处置失当被免职，职级降为"+CONFIG.ranks[S.rank].name+"（有因可溯，非随机）");
+    }
+  }
+  addLog("事件『"+ev.title+"』：选择了『"+o.t+"』（"+o.note+"）");
+  $("event-box").classList.add("hidden");
+  if(S.intg <= 0){ triggerInvestigation(); return; }
+  renderAll();
+}
+
+/* 立案审查：合理退出路径的唯一入口 */
+function triggerInvestigation(){
+  addLog("廉政归零，组织立案审查，停职考察（本年度暂停晋升）");
+  S.investigation = true;
+  S.quarterDone = true;
+  const lines = '<div class="result-line" style="color:var(--red);">廉政归零，组织对你立案审查。</div>'+
+    (S.violation
+      ? '<div class="result-line">审查发现：你曾接受企业礼金、违反廉洁纪律（存在违纪记录）。</div>'
+      : '<div class="result-line">审查核实：未发现违纪问题，查无实据。</div>');
+  renderResult("组织立案审查", lines, "等待审查结论", ()=>{
+    $("result-box").classList.add("hidden");
+    if(S.violation){
+      S.retired = true;
+      S.exitReason = "因违反廉洁纪律被组织审查查实，依规开除公职（全程有廉政预警，选择可避免）";
+      renderFinal();
+    } else {
+      addLog("审查结论：查无实据，恢复任职");
+      S.intg = 40;
+      S.investigation = false;
+      renderAll();
+    }
+  }, false);
+}
+
+/* 人脉圈流动：年度结算，NPC 也会晋升/调任，不会止步不前 */
+function npcTurnover(){
+  // 上级流动：约20%概率组织另有任用
+  if(S.npcs.bosses.length>1 && Math.random()<0.20){
+    const b = S.npcs.bosses[Math.floor(Math.random()*S.npcs.bosses.length)];
+    addLog("你的上级"+b.name+"（"+b.title+"）组织另有任用，调任他职；新领导就位，一切重新相处");
+    S.npcs.bosses = S.npcs.bosses.map(x=>x===b?makeBossNpc(S.rank):x);
+  }
+  // 同级流动：可能升任你的直接上级
+  if(S.npcs.peers.length && Math.random()<0.25){
+    const p = S.npcs.peers[Math.floor(Math.random()*S.npcs.peers.length)];
+    if(Math.random()<0.30 && S.npcs.bosses.length<3){
+      S.npcs.bosses.push({...p, fav:Math.min(100,p.fav+10)});
+      S.npcs.peers = S.npcs.peers.filter(x=>x!==p);
+      addLog("你的同级"+p.name+"（"+p.title+"）升任你的直接上级——昔日同僚，今日领导");
+      if(S.npcs.peers.length<2) S.npcs.peers.push(makePeerNpc(S.rank));
+    } else {
+      S.npcs.peers = S.npcs.peers.map(x=>x===p?makePeerNpc(S.rank):x);
+      addLog("你的同级"+p.name+"（"+p.title+"）晋升/轮岗调离，新同僚就位");
+    }
+  }
+  // 下属流动：工作出色获提拔为同级，补新下属
+  if(S.npcs.subs.length && Math.random()<0.25){
+    const s = S.npcs.subs[Math.floor(Math.random()*S.npcs.subs.length)];
+    addLog("你的下属"+s.name+"（"+s.title+"）工作出色获组织提拔，与你并肩共事");
+    S.npcs.peers.push({...s, fav:50});
+    S.npcs.subs = S.npcs.subs.filter(x=>x!==s);
+    S.npcs.subs.push(makeSubNpc(S.rank));
+  }
+}
+
+/* 下线晋升：骨干晋升进度满（阈值随其职级变化）且能力≥70 → 组织提拔（你一直扶持的内部人，可一路扶持到国家主席） */
+function PROTEG_TITLES(){
+  return ["副镇长","镇长","副县长","县长","副市长","市长","副省长","省长","国务院副总理","国务院总理","国家主席"];
+}
+function protgNeed(rank){ return 4 + Math.min(8, rank); }   // 晋升所需扶持次数：一级科员4次 → 逐级提高，职级越高越难扶持
+function checkProtgPromote(){
+  const g = S.npcs.protgs[0];
+  if(!g) return;
+  const need = protgNeed(g.rank||0);
+  if(g.progress>=need && g.ability>=70){
+    g.progress = 0; g.rank++;
+    const t = PROTEG_TITLES()[Math.min(Math.max(0,g.rank-1), PROTEG_TITLES().length-1)];
+    g.title = t;
+    addLog("★★ 你的骨干"+g.name+"经你长期扶持，获组织提拔为『"+t+"』（职级："+CONFIG.ranks[Math.min(g.rank, CONFIG.ranks.length-1)].name+"，你的内部人脉）");
+    if(g.rank>=3 && !g.bossed){ g.bossed = true; addLog("骨干"+g.name+"已成为高层盟友（处级以上），民主测评人脉修正+2%，可为你谋取利益"); }
+  }
+}
+
+/* 剩余精力兜底：季度结束前自动转化为事务性工作，每5精力=2政绩（与本职业务效率一致），避免零头浪费 */
+function settleEnergy(){
+  if(S.energy >= 5){
+    const units = Math.floor(S.energy/5);
+    const g = units * 2 * effMerit() * ((CONFIG.postMods[S.postFocus]||{}).merit||1) * S.facMult;
+    if(g>0){
+      S.merit += g; S.lastYearMerit += g;
+      addLog("剩余 "+S.energy+" 精力用于事务收尾与下沉调研（每5精力=2政绩），政绩+"+fmt(g));
+    }
+    S.energy = 0;
+  }
+}
+
+function endQuarter(){
+  settleEnergy();
+  // 季度工资（按职级月薪×平台系数）
+  const qw = salaryAnnual()/4;
+  S.cash = Math.round((S.cash + qw)*10)/10;
+  // 理财收益（每季度约2%±3%，有波动）
+  if(S.invest > 0){
+    const gain = Math.round(S.invest * (0.02 + (Math.random()*0.06-0.03)));
+    S.invest += gain; S.cash = Math.round((S.cash + gain)*10)/10;
+    addLog("理财收益结算："+(gain>=0?"+":"")+gain+" 万（理财本金累计 "+S.invest+" 万）");
+  }
+  // 升学在读自动推进（每季度+1，教育岗位+1）
+  if(S.studyStatus){
+    const st = S.studyStatus;
+    st.progress = Math.min(st.total, st.progress + 1 + (S.postFocus==="教育"?1:0));
+    if(st.progress >= st.total){ checkStudyGraduate(); }
+  }
+  // 资产核查（不明资产超阈值有概率被查）
+  checkWealthAudit();
+  if(S.quarter >= 4){
+    yearEnd();
+  } else {
+    S.quarter++;
+    S.energy = CONFIG.energyPerQuarter;
+    S.eventThisQuarter = false;
+    addLog("进入第 "+S.quarter+" 季度 · 季度工资 +"+fmt(qw)+" 万");
+    renderAll();
+  }
+}
+
+function yearEnd(){
+  const plat = CONFIG.platformOf(S.rank);
+  const d = S.rep/10;
+  const n = Math.min(10, 5 + S.edu/25);
+  const q = S.yearActions>=8 ? 8 : S.yearActions>=6 ? 7 : 5;
+  const j = Math.min(10, S.lastYearMerit/16);
+  const l = S.intg/10;
+  const total = d+n+q+j+l + (S.postFocus==="综合"?1:0) + S.evalBoost;   // 综合岗位统筹全域+1；上级评优保举加分
+  S.evalBoost = 0;
+  const line = CONFIG.excellentLine[plat];
+  let grade = total>=line ? "优秀" : total>=30 ? "称职" : total>=20 ? "基本称职" : "不称职";
+  S.evalHistory.push(grade);
+  if(S.evalHistory.length>3) S.evalHistory.shift();
+  addLog("年度考核：德"+fmt(d)+" 能"+fmt(n)+" 勤"+q+" 绩"+fmt(j)+" 廉"+fmt(l)+" = "+fmt(total)+"分 · "+grade);
+  // 连续不称职预警
+  const last3 = S.evalHistory.slice(-3);
+  if(last3.length>=2 && last3.slice(-2).every(g=>g==="不称职")){
+    addLog("连续两年考核不称职，组织谈话提醒：第三年仍不称职将调整岗位（降级/调离）");
+    S.warn2Bad = true;
+  }
+  const cells = [["德",d],["能",n],["勤",q],["绩",j],["廉",l]].map(c=>'<div class="eval-cell"><div class="ev-label">'+c[0]+'</div><div class="ev-score">'+fmt(c[1])+'<b style="font-size:10px;color:var(--faint);font-weight:400;">/10</b></div></div>').join("");
+  const title = "第 "+S.year+" 年 · 年度考核";
+  let lines = '<div class="eval-grid">'+cells+'</div><div class="result-line">考核得分 <b>'+fmt(total)+' / 50</b>，等次：<b>'+grade+'</b>（'+plat+'优秀线 '+line+' 分）</div>';
+  // 派系争斗事件（每年概率）
+  const factionEvt = Math.random() < 0.35;
+  const gradeIsBad3 = last3.length===3 && last3.every(g=>g==="不称职");
+  renderResult(title, lines, "进入下一年", ()=>{
+    if(gradeIsBad3){
+      // 连续3年不称职 → 调整岗位（降一级）
+      if(S.rank>0){ S.rank--; S.yearsInRank=0; addLog("连续三年考核不称职，依规调整岗位，职级降为"+CONFIG.ranks[S.rank].name+"（有预警，可预防）"); }
+      else { addLog("连续三年考核不称职，依规调整岗位（职级已最低，予以告诫）"); }
+    }
+    S.year++;
+    S.quarter = 1;
+    S.energy = CONFIG.energyPerQuarter;
+    S.yearsInRank++;
+    S.age++;
+    S.eventThisQuarter = false;
+    S.quarterDone = false;
+    S.lastYearMerit = 0;
+    S.yearActions = 0;
+    S.reviewUsed = false;
+    // 国家级重大政绩（副部及以上）
+    if(S.rank >= 7 && Math.random() < 0.30){
+      S.majorCount++;
+      const g = 300*CONFIG.effOf(S.rank);
+      S.merit += g; S.lastYearMerit += g;
+      addLog("主持国家级重大工程/政策落地，国家级重大政绩+"+fmt(g)+"（累计"+S.majorCount+"次）");
+    }
+    // 弹性延迟期间健康衰减
+    if(S.retireDecided && S.age > CONFIG.retireBase) S.health = clamp(S.health-4, 0, 100);
+    // 人脉圈流动：上级/同级/下属都会晋升、调任，不会止步不前
+    npcTurnover();
+    checkProtgPromote();
+    $("result-box").classList.add("hidden");
+    $("event-box").classList.add("hidden");
+    // 退休决策（按年龄窗口）：57-59 工龄满30可自愿提前；60 法定三选；延退中每年再决策；63 强制退
+    if(S.retireDecided){
+      if(S.age >= CONFIG.retireMax){ S.retired = true; renderFinal(); return; }
+      if(S.age >= CONFIG.retireBase){ renderRetireDecision("delayed"); return; }
+    } else {
+      if(S.age >= CONFIG.retireBase){ renderRetireDecision("normal"); return; }
+      if(S.age >= CONFIG.retireMin && S.year >= 30){ renderRetireDecision("early"); return; }
+    }
+    renderAll();
+    // 派系拉拢：中立且上级认可你（好感≥70 且其有派系）→ 上级拉你入派（概率提高，更容易触发）
+    const recruiter = S.faction==="中立" ? S.npcs.bosses.find(b=>b.faction && b.fav>=70) : null;
+    if(recruiter && Math.random()<0.6){
+      const re = CONFIG.recruitEvent();
+      re.text = "你的上级"+recruiter.name+"（"+recruiter.title+"）私下找你谈话，希望你能加入他的派系"+recruiter.faction+"，互相照应、共进退。";
+      renderEvent(re);
+      return;
+    }
+    // 下线风险事件
+    if(S.npcs.protgs.length && Math.random()<0.12){
+      renderEvent(CONFIG.protegeEvents()[0]);
+      return;
+    }
+    // 派系事件（独立展示）
+    if(factionEvt && !S.retired){
+      const fe = CONFIG.factionEvents()[Math.floor(Math.random()*3)];
+      renderEvent({cat:"派系", title:fe.title, text:fe.text, opts:fe.opts});
+    }
+  }, grade==="优秀");
+}
+
+/* 组织考察 + 选岗 */
+$("btn-review").onclick = function(){
+  if(!S.reviewAllowed || S.reviewUsed) return;
+  S.reviewUsed = true;
+  const c = CONFIG.promote[S.rank];
+  const repNow = evalSupport();
+  S.lastSupport = repNow;
+  const majorUsed = S.majorExploit>0;   // 重大立功：一次性，直接晋升（不要求其他任何条件）
+  const pass = majorUsed ? true : repNow >= c.eval;
+  if(pass){
+    if(majorUsed){
+      S.majorExploit--;
+      S.lastPromoReason = "重大立功破格晋升（其余条件全部视作满足）";
+      addLog("★★ 重大立功破格晋升：其余条件全部视作满足，直接晋升一级（重大立功仅此一次，用后即止）");
+    } else {
+      const needYears = c.years - (S.exploit>0 && c.years>2 ? 1 : 0);
+      if(S.yearsInRank<needYears && S.exploit>0 && c.years>2){
+        S.exploit--;   // 普通立功减年限
+        S.lastPromoReason = "立功表现提前晋升（任职年限-1）";
+      } else {
+        S.lastPromoReason = "任职年限与条件达标，组织提拔";
+      }
+    }
+    const targetRank = S.rank + 1;
+    S.rank = targetRank;
+    S.yearsInRank = 0;
+    const next = CONFIG.ranks[S.rank].name;
+    addLog("组织考察通过！晋升为『"+next+"』");
+    renderPostSelect(targetRank);
+  } else {
+    addLog("考察未通过：民主测评支持率不足");
+    const lines = '<div class="result-line">民主测评支持率 <b>'+fmt(repNow)+'%</b>（门槛 '+c.eval+'%）</div><div class="result-line" style="color:var(--red);">未达门槛，本次晋升未获通过。六个月后可再次申请。</div>';
+    renderResult("组织考察 · 未通过", lines, "继续履职", ()=>{ $("result-box").classList.add("hidden"); renderAll(); }, false);
+  }
+};
+
+/* ================= 新档 / 重开 ================= */
+function restart(){
+  $("final-box").classList.add("hidden");
+  $("game").classList.add("hidden");
+  $("start-box").classList.remove("hidden");
+}
+
+$("btn-start").onclick = function(){
+  const name = ($("inp-name").value || "青云").trim();
+  const cat = document.querySelector(".cat-btn.sel").dataset.cat;
+  const fac = document.querySelector(".fac-btn.sel").dataset.fac;
+  const eduBg = document.querySelector(".edu-btn.sel").dataset.edu;
+  const postFocus = document.querySelector(".post-btn.sel").dataset.post;
+  S = newState(name, cat, fac, eduBg, postFocus);
+  S.npcs = genNpcs(S.rank);
+  $("start-box").classList.add("hidden");
+  $("game").classList.remove("hidden");
+  addLog("入职 "+(cat==="综合"?"综合管理类":cat==="行政"?"行政执法类":"专业技术类")+"；学历定级："+S.eduBg+"（学历"+fmt(S.edu)+"，"+eduLevel(S.edu)+"）——职级起点按学历定，职务从基层干起");
+  addLog("入职职务岗位："+S.postTitle+"（"+S.postFocus+"类）——职级待遇"+CONFIG.ranks[S.rank].name+(CONFIG.ranks[S.rank].level?"（"+CONFIG.ranks[S.rank].level+"）":"")+"，职务仍是基层办所岗位，领导职务等组织提拔");
+  addLog("立场："+fac+(fac==="中立"?"（中立观望，谁都不得罪；上级认可后可能拉拢你入派系）":"（派系争斗中的立场选择）"));
+  addLog("试用期转正，担任"+CONFIG.ranks[S.rank].name+"，从今天开始你的仕途");
+  renderAll();
+};
+
+document.querySelectorAll(".cat-btn").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll(".cat-btn").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel");
+    renderPostRow();   // 入职方向决定可选的科员岗位类别
+  };
+});
+document.querySelectorAll(".edu-btn").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll(".edu-btn").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel");
+    renderPostRow();   // 学历决定定级职级，入职岗位随职级切换
+  };
+});
+function renderPostRow(){
+  // 入职职务岗位统一为基层办所岗位（rank0）——学历只决定职级待遇，职务从基层干起
+  // 且岗位类别受入职方向限定（综合管理类不出执法/技术岗，行政执法类只出执法岗，专业技术类出技术岗）
+  const cat = document.querySelector(".cat-btn.sel") ? document.querySelector(".cat-btn.sel").dataset.cat : "综合";
+  const allowed = CONFIG.catPosts[cat] || CONFIG.catPosts["综合"];
+  const posts = CONFIG.ranks[0].posts.filter(p=>allowed.includes(p.focus));
+  const box = $("post-row");
+  box.innerHTML = "";
+  posts.forEach((p,i)=>{
+    const d = document.createElement("div");
+    d.className = "post-btn" + (i===0?" sel":"");
+    d.dataset.post = p.t;
+    const mod = CONFIG.postMods[p.focus] || CONFIG.postMods["综合"];
+    d.innerHTML = '<span>'+p.t+'</span><small>'+p.focus+' · '+mod.note+'</small>';
+    d.onclick = ()=>{
+      document.querySelectorAll(".post-btn").forEach(x=>x.classList.remove("sel"));
+      d.classList.add("sel");
+    };
+    box.appendChild(d);
+  });
+}
+renderPostRow();
+document.querySelectorAll(".post-btn").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll(".post-btn").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel");
+  };
+});
+document.querySelectorAll(".fac-btn").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll(".fac-btn").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel");
+  };
+});
+$("inp-name").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btn-start").click(); });
+</script>
+</body>
+</html>
