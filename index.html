@@ -67,6 +67,8 @@ aside{display:flex; flex-direction:column; gap:12px;}
 
 #actions{display:grid; grid-template-columns:repeat(2,1fr); gap:9px;}
 @media (max-width:600px){ #actions{grid-template-columns:1fr;} }
+.action-group{grid-column:1 / -1; margin:6px 0 -2px; font-size:12px; font-weight:600; letter-spacing:2px; color:var(--sub); border-bottom:1px dashed var(--line); padding-bottom:3px;}
+.action-group:first-child{margin-top:0;}
 .action{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:10px 13px; cursor:pointer; transition:border-color .15s, transform .1s;}
 .action:hover{border-color:var(--red);}
 .action:active{transform:scale(.99);}
@@ -102,9 +104,12 @@ aside{display:flex; flex-direction:column; gap:12px;}
 .post-card{background:#FBF9F4; border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; margin-bottom:9px; cursor:pointer; transition:border-color .15s;}
 .post-card:hover{border-color:var(--red);}
 .post-card .pc-name{font-size:14px; font-weight:600; margin-bottom:2px;}
+.post-card .pc-tag{display:inline-block; font-size:10px; font-weight:400; color:var(--blue); border:1px solid var(--blue); border-radius:8px; padding:0 6px; margin-left:6px; vertical-align:1px;}
 .post-card .pc-focus{font-size:11.5px; color:var(--amber); margin-bottom:4px;}
 .post-card .pc-bonus{font-size:11.5px; color:var(--sub);}
 .post-card .pc-bonus b{color:var(--green);}
+.as-block{margin-top:14px; border-top:1px dashed var(--line); padding-top:10px;}
+.as-title{font-size:13px; font-weight:600; color:var(--red); margin-bottom:6px; letter-spacing:1px;}
 
 #final-box{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; text-align:center;}
 #final-box h2{color:var(--red); font-size:20px; margin-bottom:8px; letter-spacing:3px;}
@@ -174,7 +179,7 @@ aside{display:flex; flex-direction:column; gap:12px;}
       <div class="fac-btn" data-fac="学术派">学术派<small>学历提升更快</small></div>
     </div>
     <button class="btn" id="btn-start">入职</button>
-    <p class="small-note">试玩版 · 规则集 QINGYUNLU-R2<br>12 职级（科员→国家主席） · 晋升选岗 · 人脉派系 · 考学党校 · 天灾立功 · 工资资产 · 合规退休（60 法定 / 弹性延后至 63 / 57 起可提前）</p>
+    <p class="small-note">试玩版 · 规则集 QINGYUNLU-R2<br>12 职级（科员→国家主席） · 晋升选岗（含高校/党校岗） · 人脉派系 · 考学党校 · 分类政绩（农业/产业等） · 天灾立功 · 工资资产（购房购车独立面板） · 合规退休（60 法定 / 弹性延后至 63 / 57 起可提前）</p>
   </div>
 
   <!-- 游戏主体 -->
@@ -184,6 +189,7 @@ aside{display:flex; flex-direction:column; gap:12px;}
       <div class="post">
         <div class="post-name" id="post-name">—</div>
         <div class="post-meta" id="post-meta">—</div>
+        <button class="btn ghost" id="btn-assets" style="margin-top:6px;padding:4px 14px;font-size:11.5px;">💰 资产管理（购房购车/理财/捐赠）</button>
       </div>
     </header>
     <main>
@@ -206,6 +212,7 @@ aside{display:flex; flex-direction:column; gap:12px;}
           <div class="stat"><div class="row"><span>健康</span><b id="v-health">0</b></div><div class="bar"><i id="b-health" class="c-green"></i></div></div>
           <div class="stat"><div class="row"><span>学历</span><b id="v-edu">0</b></div><div class="bar"><i id="b-edu" class="c-blue"></i></div></div>
           <div class="stat"><div class="row"><span>党校</span><b id="v-dangxiao">0 期</b></div></div>
+          <div class="stat" id="v-focus-row"><div class="row" style="font-size:10.5px;color:var(--faint);"><span>分管政绩</span><b id="v-focus" style="font-weight:400;">—</b></div></div>
           <div class="stat"><div class="row"><span>资产</span><b id="v-wealth">现金 0 万</b></div></div>
           <div class="stat" style="margin-top:2px;"><div class="row" style="font-size:10.5px;color:var(--faint);"><span id="v-wealth2">无房无车 · 年收入 0 万</span></div></div>
           <div class="stat" id="v-study-row" style="display:none;"><div class="row" style="font-size:10.5px;color:var(--blue);"><span id="v-study">学历在读</span></div></div>
@@ -248,26 +255,21 @@ const CONFIG = {
   retireMax: 63,          // 弹性延迟退休上限（最多延后 3 年）
   retireMin: 57,          // 弹性提前退休下限（最多提前 3 年，需工龄满30年）
 
-  // 十六类季度行动（可重复，受精力约束；另加理财/捐赠两条资产花途）
+  // 季度行动（可重复，受精力约束；购房/购车/理财/捐赠/做账已移出，独立为"资产管理"面板，不占季度行动）
   actions: {
-    official: { name:"本职业务", cost:25, merit:10, desc:"完成日常业务，勤恳扎实", note:"政绩+10" },
-    project:  { name:"重点项目", cost:50, merit:25, health:-6, desc:"牵头攻坚重大项目", note:"政绩+25 · 健康-6" },
-    study:    { name:"学习备考", cost:30, edu:12, merit:-3, dangxiao:1, desc:"备考进修，积累党校学时", note:"学历+12 · 党校+1 · 政绩-3" },
-    mass:     { name:"群众工作", cost:25, rep:6, desc:"走村入户，化解群众诉求", note:"口碑+6" },
-    social:   { name:"社交应酬", cost:30, rel:10, intg:-6, desc:"维护组织与人际关系", note:"关系+10 · 廉政-6" },
-    rest:     { name:"休息养生", cost:20, health:12, merit:-3, desc:"调养身体，劳逸结合", note:"健康+12 · 政绩-3" },
-    report:   { name:"向上汇报", cost:20, boss:8, merit:-2, desc:"向直接上级汇报工作思路", note:"上级好感+8 · 政绩-2" },
-    peer:     { name:"维护同级", cost:20, peerRel:8, rel:4, desc:"与同僚走动，互通有无", note:"同级好感+8 · 关系+4" },
-    coach:    { name:"培养下属", cost:25, sub:5, subFav:8, desc:"指导下属业务，带好队伍", note:"下属能力+5 · 好感+8" },
-    protg:    { name:"培养骨干", cost:25, protg:1, desc:"重点扶持自己的下线干部（二级主任科员起可发展内部人，可一路扶持其晋升）", note:"骨干能力+5 · 好感+8 · 晋升进度+1" },
-    buyhouse: { name:"购房置业", cost:25, buyhouse:1, desc:"用合法收入购置房产（小区档次可选）", note:"现金→房产（普通/中档/高档）" },
-    buycar:   { name:"购车代步", cost:15, buycar:1, desc:"购置汽车（品牌档次可选）", note:"现金→汽车（经济/中档/高档）" },
-    invest:   { name:"投资理财", cost:15, invest:1, desc:"把闲置资金投入稳健理财，钱生钱", note:"投入现金 · 每季度收益约2%±3%（有波动）" },
-    donate:   { name:"慈善捐赠", cost:10, donate:1, desc:"以个人名义捐资助学、扶危济困", note:"现金-10 万 · 口碑+3 · 廉政+1" },
-    wash:     { name:"做账洗白", cost:20, wash:1, desc:"请会计把账目往来理顺（把可疑收入做成合法来源）", note:"花费可疑资产×60% 清零隐患" },
-    exam:     { name:"报考升学考试", cost:20, exam:1, desc:"学历点达标后可报考专升本/考研/考博（答对越多学校越好）", note:"考试录取 · 学制在学" },
-    party:    { name:"党建调研", cost:25, merit:8, rep:5, dangxiao:1, desc:"深入基层党组织调研党建情况（党政路线专属）", note:"政绩+8 · 口碑+5 · 党校+1" },
-    cadre:    { name:"干部考察", cost:25, rel:8, merit:5, desc:"带队考察干部人选，把好选人用人关（党政路线专属）", note:"关系+8 · 政绩+5" }
+    official: { name:"本职业务", cost:25, merit:10, grp:"工作", desc:"完成日常业务，勤恳扎实", note:"政绩+10" },
+    project:  { name:"重点项目", cost:50, merit:25, health:-6, grp:"工作", desc:"牵头攻坚重大项目", note:"政绩+25 · 健康-6" },
+    study:    { name:"学习备考", cost:30, edu:1, merit:-3, dangxiao:1, grp:"学习", desc:"备考进修，积累党校学时（学历主要靠升学考试提升，学习备考细水长流）", note:"学历+1 · 党校+1 · 政绩-3" },
+    mass:     { name:"群众工作", cost:25, rep:6, grp:"口碑", desc:"走村入户，化解群众诉求", note:"口碑+6" },
+    social:   { name:"社交应酬", cost:30, rel:10, intg:-6, grp:"人脉", desc:"维护组织与人际关系", note:"关系+10 · 廉政-6" },
+    rest:     { name:"休息养生", cost:20, health:12, merit:-3, grp:"健康", desc:"调养身体，劳逸结合", note:"健康+12 · 政绩-3" },
+    report:   { name:"向上汇报", cost:20, boss:8, merit:-2, grp:"人脉", desc:"向直接上级汇报工作思路", note:"上级好感+8 · 政绩-2" },
+    peer:     { name:"维护同级", cost:20, peerRel:8, rel:4, grp:"人脉", desc:"与同僚走动，互通有无", note:"同级好感+8 · 关系+4" },
+    coach:    { name:"培养下属", cost:25, sub:5, subFav:8, grp:"人脉", desc:"指导下属业务，带好队伍", note:"下属能力+5 · 好感+8" },
+    protg:    { name:"培养骨干", cost:25, protg:1, grp:"人脉", desc:"重点扶持自己的下线干部（二级主任科员起可发展内部人，可一路扶持其晋升）", note:"骨干能力+5 · 好感+8 · 晋升进度+1" },
+    exam:     { name:"报考升学考试", cost:20, exam:1, grp:"学习", desc:"按当前学历直接报考专升本/考研/考博（答对越多学校越好，专业决定发展方向）", note:"考试录取 · 学制在学" },
+    party:    { name:"党建调研", cost:25, merit:8, rep:5, dangxiao:1, grp:"工作", desc:"深入基层党组织调研党建情况（党政路线专属）", note:"政绩+8 · 口碑+5 · 党校+1" },
+    cadre:    { name:"干部考察", cost:25, rel:8, merit:5, grp:"工作", desc:"带队考察干部人选，把好选人用人关（党政路线专属）", note:"关系+8 · 政绩+5" }
   },
 
   // 党政路线：行动覆盖（走党政路线后，部分行动换皮换效）
@@ -341,7 +343,8 @@ const CONFIG = {
       { t:"乡镇司法所科员", focus:"执法" },
       { t:"乡镇派出所民警", focus:"执法" },
       { t:"乡镇综合行政执法队队员", focus:"执法" },
-      { t:"市城市管理综合行政执法局科员", focus:"执法" }
+      { t:"市城市管理综合行政执法局科员", focus:"执法" },
+      { t:"高校科任教师（助教）", focus:"教育", univ:true }
     ]},
     { name:"四级主任科员", level:"副科级", posts:[
       { t:"副镇长（分管农业）", focus:"农业" },
@@ -351,6 +354,8 @@ const CONFIG = {
       { t:"县农业农村局副局长（分管种植业）", focus:"农业" },
       { t:"县卫生健康局副局长（分管医政）", focus:"民生" },
       { t:"县市场监督管理局副局长（分管执法）", focus:"执法" },
+      { t:"高校学工办主任", focus:"教育", univ:true },
+      { t:"县委党校教师（讲师）", focus:"教育", needParty:true },
       { t:"乡镇党委副书记", focus:"党务" }
     ]},
     { name:"二级主任科员", level:"正科级", posts:[
@@ -360,6 +365,8 @@ const CONFIG = {
       { t:"县教育局局长", focus:"教育" },
       { t:"县市场监管局局长", focus:"执法" },
       { t:"县卫生健康局局长", focus:"民生" },
+      { t:"二级学院副院长", focus:"教育", univ:true },
+      { t:"县委党校副校长", focus:"教育", needParty:true },
       { t:"乡镇党委书记", focus:"党务" },
       { t:"县直机关工委书记", focus:"党务" }
     ]},
@@ -370,6 +377,8 @@ const CONFIG = {
       { t:"副县长（分管政法）", focus:"执法" },
       { t:"县公安局局长（兼任副县长）", focus:"执法" },
       { t:"市应急管理局副局长（分管防灾减灾）", focus:"民生" },
+      { t:"二级学院院长", focus:"教育", univ:true },
+      { t:"县委党校常务副校长", focus:"教育", needParty:true },
       { t:"县纪委书记", focus:"党务" },
       { t:"县委组织部副部长", focus:"党务" }
     ]},
@@ -380,6 +389,8 @@ const CONFIG = {
       { t:"市教育局局长", focus:"教育" },
       { t:"市综合执法局局长", focus:"执法" },
       { t:"市卫生健康委主任", focus:"民生" },
+      { t:"高校教务处处长", focus:"教育", univ:true },
+      { t:"市委党校副校长", focus:"教育", needParty:true },
       { t:"县委书记", focus:"党务" },
       { t:"县委副书记", focus:"党务" }
     ]},
@@ -390,6 +401,8 @@ const CONFIG = {
       { t:"市公安局局长（兼任副市长）", focus:"执法" },
       { t:"省农业农村厅副厅长（分管农业产业化）", focus:"农业" },
       { t:"省产业厅副厅长（分管工业经济）", focus:"产业" },
+      { t:"省属高校副校长", focus:"教育", univ:true },
+      { t:"省委党校副校长", focus:"教育", needParty:true },
       { t:"市委副书记", focus:"党务" },
       { t:"市纪委书记", focus:"党务" }
     ]},
@@ -400,6 +413,8 @@ const CONFIG = {
       { t:"省教育厅厅长", focus:"教育" },
       { t:"省公安厅厅长", focus:"执法" },
       { t:"省卫生健康委主任", focus:"民生" },
+      { t:"省属高校校长", focus:"教育", univ:true },
+      { t:"省委党校常务副校长", focus:"教育", needParty:true },
       { t:"省委组织部副部长", focus:"党务" },
       { t:"省纪委副书记", focus:"党务" }
     ]},
@@ -410,6 +425,7 @@ const CONFIG = {
       { t:"副省长（分管政法）", focus:"执法" },
       { t:"部委副部长（执法监察）", focus:"执法" },
       { t:"部委副部长（民生保障）", focus:"民生" },
+      { t:"部属重点高校校长", focus:"教育", univ:true },
       { t:"省委副书记", focus:"党务" },
       { t:"省委组织部部长", focus:"党务" }
     ]},
@@ -481,11 +497,11 @@ const CONFIG = {
 
   // 岗位的领域直接挂在岗位对象上（见 ranks 定义），postFocus 由岗位决定
 
-  // 选岗：从当前职级岗位池随机抽 3 个候选；党务岗（党政路线）需党校经历解锁
+  // 选岗：从当前职级岗位池随机抽 3 个候选；党务岗（党政路线）需党校经历解锁；党校教师岗（needParty）需党校≥1期；高校岗（univ）为事业单位序列
   pickPosts: function(rank){
     const pool = CONFIG.ranks[rank].posts.slice();
     const partyPool = pool.filter(p=>p.focus==="党务");
-    const adminPool = pool.filter(p=>p.focus!=="党务");
+    const adminPool = pool.filter(p=>p.focus!=="党务" && !(p.needParty && (!S || S.dangxiao<4)));
     const shuffle = arr => { const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
     let chosen;
     if(S && S.path==="党政"){
@@ -717,6 +733,7 @@ function newState(name, cat, faction, eduBg, postFocus){
     age:CONFIG.startAge,
     energy:CONFIG.energyPerQuarter,
     merit:0, rep:60+catMod.rep, rel:25, intg:88, health:92, edu:eduMap.edu+catMod.edu,
+    focusMerit:{ 综合:0, 农业:0, 产业:0, 教育:0, 执法:0, 民生:0, 党务:0, 专项:0 },   // 分类政绩：按岗位分管方向累计（农业政绩/产业政绩等，选岗与履历可见）
     path:"行政",                                       // 路线：行政 / 党政（党校1期后可选党务岗转党政线）
     lastYearMerit:0, yearActions:0,
     evalHistory:[],
@@ -860,6 +877,14 @@ function renderStats(){
   $("p-exploit").textContent = S.exploit + " 次" + (S.majorExploit>0 ? " · 重大立功 " + S.majorExploit + " 次" : "");
   $("v-edu").textContent = fmt(S.edu) + "（" + eduLevel(S.edu) + "）";
   $("v-dangxiao").textContent = S.dangxiao + " 期";
+  // 分管政绩（分类政绩）：当前岗位方向高亮，晋升选岗时与岗位方向联动
+  const fm = S.focusMerit || {};
+  const cur = S.postFocus || "综合";
+  const fmOrder = ["综合","农业","产业","教育","执法","民生","党务"];
+  const fmHtml = fmOrder.filter(k=>fm[k]!==undefined).map(k=>
+    '<span style="'+(k===cur?'color:var(--green);font-weight:600;':'')+'">'+k+' '+(k===cur?'<b>':"")+fmt(fm[k]||0)+(k===cur?'</b>':"")+'</span>'
+  ).join(" &nbsp;·&nbsp; ");
+  $("v-focus").innerHTML = fmHtml || "暂无";
   // 资产显示（万元）
   const wealth = "现金 " + Math.round(S.cash) + " 万" + (S.invest>0 ? " · 理财 " + Math.round(S.invest) + " 万" : "");
   $("v-wealth").textContent = wealth;
@@ -939,19 +964,22 @@ function renderPromotion(){
 function renderActions(){
   const box = $("actions");
   box.innerHTML = "";
+  // 行动按分组渲染，选项更清晰：工作 / 人脉 / 学习 / 口碑 / 健康
+  const grpOrder = [["工作","■ 本职工作"],["人脉","■ 人脉经营"],["学习","■ 考学进修"],["口碑","■ 群众口碑"],["健康","■ 健康管理"]];
+  const groups = {};
   for(const k of Object.keys(CONFIG.actions)){
     const a = CONFIG.actions[k];
     const locked = k==="protg" && S.rank<2;   // 发展下线：二级主任科员起解锁
     if(locked) continue;   // 未解锁不显示
     // 党政路线专属行动；行政路线不显示党务专属行动
     if(S.path!=="党政" && (k==="party"||k==="cadre")) continue;
-    // 升学按钮：学历点达标（当前层级+10）、未在读、还有下一级学历可升 才可用
+    // 升学按钮：按当前学历等级直接可报，未在读、还有下一级学历才可用
     let disabled = false, label = a.name, desc = a.desc, note = a.note;
     if(k === "exam"){
       const nextKey = S.studyStatus ? null : nextStudyKey();
-      if(!nextKey || S.edu < (parseInt(nextKey)+10)){ disabled = true; note = "学历点需≥" + (nextKey? parseInt(nextKey)+10 : 90) + " 才可报考"; }
-      if(S.studyStatus) note = "在读中，毕业后可报考下一级";
-      desc = "学历点达标后可报考" + (nextStudyKey()? CONFIG.studyNeed[nextStudyKey()].label : "最高学历") + "（答对越多学校越好，专业决定发展方向）";
+      if(!nextKey){ disabled = true; note = "学历已达最高"; }
+      if(S.studyStatus){ disabled = true; note = "在读中，毕业后可报考下一级"; }
+      desc = "按当前学历直接报考" + (nextStudyKey()? CONFIG.studyNeed[nextStudyKey()].label : "最高学历") + "（答对越多学校越好，专业决定发展方向）";
     }
     if(k === "study" && S.studyStatus){
       label = "在职进修";
@@ -965,17 +993,28 @@ function renderActions(){
       note = CONFIG.partyOverrides[k].note;
     }
     const can = S.energy >= a.cost && !S.quarterDone && !locked && !disabled;
-    const div = document.createElement("div");
-    div.className = "action" + (can?"":" disabled");
-    div.innerHTML = '<span class="a-cost">精力'+a.cost+'</span><div class="a-name">'+label+'</div><div class="a-desc">'+desc+'</div><div class="a-tags">'+note+'</div>';
-    if(can) div.onclick = ()=>doAction(k);
-    box.appendChild(div);
+    (groups[a.grp||"工作"] = groups[a.grp||"工作"] || []).push({ k, a, label, desc, note, can });
   }
+  grpOrder.forEach(([g,title])=>{
+    const items = groups[g];
+    if(!items || !items.length) return;
+    const gh = document.createElement("div");
+    gh.className = "action-group";
+    gh.textContent = title;
+    box.appendChild(gh);
+    items.forEach(it=>{
+      const div = document.createElement("div");
+      div.className = "action" + (it.can?"":" disabled");
+      div.innerHTML = '<span class="a-cost">精力'+it.a.cost+'</span><div class="a-name">'+it.label+'</div><div class="a-desc">'+it.desc+'</div><div class="a-tags">'+it.note+'</div>';
+      if(it.can) div.onclick = ()=>doAction(it.k);
+      box.appendChild(div);
+    });
+  });
   const end = document.createElement("div");
   end.className = "action";
   end.style.borderColor = "var(--red)";
   end.style.gridColumn = "1 / -1";
-  end.innerHTML = '<div class="a-name" style="color:var(--red);">结束本季度 →</div><div class="a-desc">进入下一季度或年度考核</div>';
+  end.innerHTML = '<div class="a-name" style="color:var(--red);">结束本季度 →</div><div class="a-desc">进入下一季度或年度考核（资产操作请点右上角「资产管理」，不占精力）</div>';
   end.onclick = ()=>endQuarter();
   box.appendChild(end);
 }
@@ -1016,12 +1055,14 @@ function renderPostSelect(rank){
   for(let i=0;i<candidates.length;i++){
     const p = candidates[i];
     const mod = CONFIG.postMods[p.focus] || CONFIG.postMods["综合"];
-    cards += '<div class="post-card" data-idx="'+i+'"><div class="pc-name">'+p.t+'</div>'+
-      '<div class="pc-focus">类别：'+p.focus+'</div><div class="pc-bonus">'+mod.note+'</div></div>';
+    const fm = (S.focusMerit && S.focusMerit[p.focus]!==undefined) ? fmt(S.focusMerit[p.focus]) : 0;
+    const tag = p.univ ? '<span class="pc-tag">事业单位·高校</span>' : p.needParty ? '<span class="pc-tag">党校系统</span>' : p.focus==="党务" ? '<span class="pc-tag">党务</span>' : "";
+    cards += '<div class="post-card" data-idx="'+i+'"><div class="pc-name">'+p.t+' '+tag+'</div>'+
+      '<div class="pc-focus">类别：'+p.focus+' · 你在该方向已积累政绩 '+fm+'</div><div class="pc-bonus">'+mod.note+'</div></div>';
   }
   box.innerHTML = '<div class="r-title up">✦ 组织考察通过 · 岗位选择</div>'+
     '<div class="result-line">晋升职级：'+CONFIG.ranks[rank].name+(CONFIG.ranks[rank].level?'（'+CONFIG.ranks[rank].level+'）':'')+' · 民主测评支持率 <b>'+fmt(S.lastSupport)+'%</b>（门槛 '+CONFIG.promote[rank-1].eval+'%）· 实绩核查通过 · 组织谈话顺利</div>'+
-    '<div class="result-line" style="color:var(--sub);">组织从备选岗位库中推荐以下 3 个岗位，请选择赴任（岗位类别影响产出与人脉；党务岗需党校经历，你已完成 '+S.dangxiao+' 期党校培训'+(S.path==="党政"?"，当前在党政路线":"")+'）</div>'+
+    '<div class="result-line" style="color:var(--sub);">组织从备选岗位库中推荐以下 3 个岗位，请选择赴任（岗位类别影响产出与人脉；党务岗需党校经历，你已完成 '+S.dangxiao+' 期党校培训'+(S.path==="党政"?"，当前在党政路线":"")+'；含高校事业单位岗与党校系统岗，可走教育/党政线）</div>'+
     cards;
   box.querySelectorAll(".post-card").forEach(c=>{
     c.onclick = ()=>{ applyPost(parseInt(c.dataset.idx)); };
@@ -1035,6 +1076,7 @@ function applyPost(idx){
   S.postTitle = p.t;
   S.postIdx = CONFIG.ranks[S.rank].posts.findIndex(x=>x.t===p.t);
   if(S.postIdx<0) S.postIdx = 0;
+  if(p.univ) addLog("任职高校（事业单位）岗位——走事业单位序列，仍是公务员身份（参照公务员法管理），学历积累有加成");
   // 党务岗 → 转入党政路线（行动集切换）；行政岗 → 回归行政路线
   if(p.focus === "党务"){
     const was = S.path;
@@ -1056,6 +1098,75 @@ function applyPost(idx){
   $("result-box").classList.add("hidden");
   renderAll();
 }
+
+/* 资产管理面板：购房/购车/理财/捐赠/做账——独立于季度行动，不占精力，随时可操作 */
+function renderAssets(){
+  const box = $("result-box");
+  box.classList.remove("hidden");
+  const plat = CONFIG.platformOf(S.rank);
+  const base = CONFIG.houseCost[plat] || 60;
+  const names = CONFIG.houseNames[plat] || CONFIG.houseNames["县"];
+  const closeBtn = '<button class="btn ghost" style="margin-top:10px;" onclick="document.getElementById(\'result-box\').classList.add(\'hidden\')">收起面板</button>';
+  const riskTip = S.dirty>0 ? '<div class="result-line" style="color:var(--red);">⚠ 账上有不明资产 '+fmt(S.dirty)+' 万留痕——廉政核查可能查到你，优先"做账洗白"。</div>' : "";
+  // 购房选择
+  const houseBtns = ["普通","中档","高档"].map(tier=>{
+    const cost = Math.round(base * CONFIG.houseTiers[tier].mult);
+    return '<button class="ev-opt" onclick="buyHouse(\''+tier+'\','+cost+',\''+names[tier]+'\')">'+names[tier]+'<small>'+({普通:"普通",中档:"中档",高档:"高档"}[tier])+' · '+cost+' 万（现金 '+fmt(S.cash)+' 万）</small></button>';
+  }).join("");
+  // 购车选择
+  const carBtns = Object.keys(CONFIG.carBrands).map(k=>{
+    const bd = CONFIG.carBrands[k];
+    return '<button class="ev-opt" onclick="buyCar(\''+k+'\',\''+bd.name+'\','+bd.cost+')">'+bd.name+'<small>'+({经济:"经济型",中档:"中档",高档:"高档"}[k])+' · '+bd.cost+' 万（现金 '+fmt(S.cash)+' 万）</small></button>';
+  }).join("");
+  box.innerHTML =
+    '<div class="r-title up">💰 资产管理 · 不占季度精力</div>'+
+    '<div class="result-line" style="color:var(--sub);">现金 '+fmt(S.cash)+' 万 · 理财 '+fmt(S.invest)+' 万 · 房产 '+S.house+' 套 · '+(S.car?S.car.brand:"无车")+' · 年收入 '+fmt(salaryAnnual())+' 万</div>'+riskTip+
+    '<div class="as-block"><div class="as-title">🏠 购房置业 · '+plat+'（基准价 '+base+' 万/套）</div>'+houseBtns+'</div>'+
+    '<div class="as-block"><div class="as-title">🚗 购车代步</div>'+(S.car?'<div class="result-line" style="color:var(--faint);font-size:11px;">家中已有 '+S.car.brand+'，暂无需再购</div>':carBtns)+'</div>'+
+    '<div class="as-block"><div class="as-title">📈 投资理财 · 单笔 50 万起</div><button class="ev-opt" onclick="doInvest()">投入 50 万理财<small>每季度收益约 2%±3%（有波动），理财本金累计 '+fmt(S.invest)+' 万</small></button></div>'+
+    '<div class="as-block"><div class="as-title">🤝 慈善捐赠 · 单笔 10 万</div><button class="ev-opt" onclick="doDonate()">捐资助学 10 万<small>口碑+3 · 廉政+1（合法资产使用途径）</small></button></div>'+
+    (S.dirty>0 ? '<div class="as-block"><div class="as-title">🧾 做账洗白 · 可疑资产 '+fmt(S.dirty)+' 万</div><button class="ev-opt danger" onclick="doWash()">请会计理顺账目<small>花费可疑资产×'+Math.round(CONFIG.washCostMult*100)+'%，账目清白</small></button></div>' : '')+
+    closeBtn;
+  box.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+function buyHouse(tier, cost, name){
+  if(S.cash < cost){ addLog("现金不足 "+cost+" 万，买不起"+name); renderAssets(); return; }
+  S.cash -= cost; S.house++; S.houses.push({name, cost, plat:CONFIG.platformOf(S.rank)});
+  addLog("购置"+name+"（"+CONFIG.platformOf(S.rank)+"·"+tier+"档，"+cost+" 万），现有房产 "+S.house+" 套");
+  renderAssets();
+}
+function buyCar(k, name, cost){
+  if(S.car){ addLog("家中已有一辆车（"+S.car.brand+"），暂无需再购"); renderAssets(); return; }
+  if(S.cash < cost){ addLog("现金不足 "+cost+" 万，买不起"+name); renderAssets(); return; }
+  S.cash -= cost; S.car = {brand:name, cost:cost};
+  addLog("购得"+name+"（"+({经济:"经济型",中档:"中档",高档:"高档"}[k]||k)+"档，"+cost+" 万），通勤体面，资产账目清晰");
+  renderAssets();
+}
+function doInvest(){
+  const amount = 50;
+  if(S.cash < amount){ addLog("现金不足 "+amount+" 万，理财门槛 50 万起"); renderAssets(); return; }
+  S.cash -= amount; S.invest += amount;
+  addLog("投入 "+amount+" 万购买稳健理财产品（理财本金累计 "+S.invest+" 万，每季度结算收益约2%±3%）");
+  renderAssets();
+}
+function doDonate(){
+  const amount = 10;
+  if(S.cash < amount){ addLog("现金不足 "+amount+" 万，捐赠下限 10 万"); renderAssets(); return; }
+  S.cash -= amount;
+  S.rep = clamp(S.rep+3,0,100); S.intg = clamp(S.intg+1,0,100);
+  addLog("以个人名义捐资助学 "+amount+" 万，口碑+3 · 廉政+1（合法资产使用途径）");
+  renderAssets();
+}
+function doWash(){
+  if(S.dirty <= 0){ addLog("账目往来本无异常，无需打理"); renderAssets(); return; }
+  const fee = Math.round(S.dirty * CONFIG.washCostMult);
+  if(S.cash < fee){ addLog("现金不足 "+fee+" 万，洗白费用凑不齐"); renderAssets(); return; }
+  S.cash -= fee;
+  addLog("请资深会计理顺账目，花 "+fee+" 万把可疑收入做成合法来源（理财收益/亲属赠与），账目清白，隐患消除");
+  S.dirty = 0;
+  renderAssets();
+}
+$("btn-assets").onclick = renderAssets;
 
 /* 退休决策：三选项（按时退休 / 弹性延退 / 自愿提前退休），按年龄窗口出现 */
 function renderRetireDecision(mode){
@@ -1134,6 +1245,14 @@ function majorBonus(){
 function salaryAnnual(){
   return CONFIG.salaryBase[S.rank] * 12 * (CONFIG.platformPay[CONFIG.platformOf(S.rank)] || 1.0);
 }
+// 分类政绩：政绩增益同时计入总政绩与当前岗位分管方向（农业政绩/产业政绩等），负向成本只扣总账
+function addMerit(g, focus){
+  g = Math.round(g*10)/10;
+  S.merit += g; S.lastYearMerit += g;
+  const f = focus || S.postFocus || "综合";
+  if(g>0 && S.focusMerit[f]!==undefined) S.focusMerit[f] += g;
+  return g;
+}
 // ---- 升学考试：专升本2年/本升硕3年/硕升博3年，答题录取选专业 ----
 function nextStudyKey(){
   if(S.studyStatus) return null;
@@ -1157,8 +1276,8 @@ function checkStudyGraduate(){
 function startExam(){
   const key = nextStudyKey();
   if(!key){ addLog("暂无升学机会（学历已达最高或正在就读）"); renderAll(); return; }
-  const need = parseInt(key)+10;
-  if(S.edu < need){ addLog("学历 "+fmt(S.edu)+" 未达报考门槛 "+need+"，先静心备考（学习备考+12/季度）"); renderAll(); return; }
+  const need = CONFIG.studyNeed[key];
+  addLog("报考"+need.label+"（当前学历"+eduLevel(S.edu)+"，按学历等级直接可报，无需积攒学历点）");
   const qs = CONFIG.examQuestions.slice().sort(()=>Math.random()-0.5).slice(0,3);
   S.examState = { key, qs, idx:0, score:0 };
   renderExam();
@@ -1233,7 +1352,7 @@ function checkWealthAudit(){
   addLog("⚠ 纪委对你开展资产核查（第 "+S.wealthChecks+" 次）：查明并没收不明资产 "+fmt(seized)+" 万"+(severe?"，认定违规情节严重，记违纪、通报批评":"，诫勉谈话责令说明来源"));
   const lines = '<div class="result-line" style="color:var(--red);">第 '+S.wealthChecks+' 次资产核查</div>'+
     '<div class="result-line">查明不明资产 <b>'+fmt(seized)+' 万</b>，全部没收；廉政-'+(severe?25:15)+(severe?'；记违纪记录，影响后续考察与晋升（严重时双开）':'；诫勉谈话')+'。</div>'+
-    '<div class="result-line" style="color:var(--sub);">提示：收受的礼金会在账上留痕，可用"做账洗白"行动把可疑资产做成合法来源，防患于未然。</div>';
+    '<div class="result-line" style="color:var(--sub);">提示：收受的礼金会在账上留痕，可点右上角「资产管理」用"做账洗白"把可疑资产做成合法来源，防患于未然。</div>';
   renderResult("🛡 组织核查", lines, "继续履职", ()=>{ $("result-box").classList.add("hidden"); });
 }
 function doAction(key){
@@ -1241,77 +1360,7 @@ function doAction(key){
   if(S.energy < a.cost || S.quarterDone) return;
   S.energy -= a.cost;
   S.yearActions++;
-  // ---- 资产类行动 ----
-  if(key === "buyhouse"){
-    const plat = CONFIG.platformOf(S.rank);
-    const base = CONFIG.houseCost[plat] || 60;
-    const names = CONFIG.houseNames[plat] || CONFIG.houseNames["县"];
-    const box = $("result-box");
-    box.classList.remove("hidden");
-    box.innerHTML = '<div class="r-title up">🏠 购房置业 · '+plat+'（基准价 '+base+' 万/套）</div>'+
-      '<div class="result-line" style="color:var(--sub);">选择小区档次（影响居住品质与资产价值）：</div>';
-    ["普通","中档","高档"].forEach(tier=>{
-      const cost = Math.round(base * CONFIG.houseTiers[tier].mult);
-      const b = document.createElement("button");
-      b.className = "ev-opt";
-      b.innerHTML = names[tier] + '<small>' + ({普通:"普通",中档:"中档",高档:"高档"}[tier]||tier) + ' · ' + cost + ' 万（现金 ' + fmt(S.cash) + ' 万）</small>';
-      b.onclick = ()=>{
-        if(S.cash < cost){ addLog("现金不足 "+cost+" 万，买不起"+names[tier]); $("result-box").classList.add("hidden"); renderAll(); return; }
-        S.cash -= cost; S.house++; S.houses.push({name:names[tier], cost, plat});
-        addLog("购置"+names[tier]+"（"+plat+"·"+tier+"档，"+cost+" 万），现有房产 "+S.house+" 套");
-        $("result-box").classList.add("hidden");
-        renderAll();
-      };
-      box.appendChild(b);
-    });
-    return;
-  }
-  if(key === "buycar"){
-    if(S.car){ addLog("家中已有一辆车（"+S.car.brand+"），暂无需再购"); renderAll(); return; }
-    const box = $("result-box");
-    box.classList.remove("hidden");
-    box.innerHTML = '<div class="r-title up">🚗 购车代步</div><div class="result-line" style="color:var(--sub);">选择品牌档次：</div>';
-    Object.keys(CONFIG.carBrands).forEach(k=>{
-      const bd = CONFIG.carBrands[k];
-      const b = document.createElement("button");
-      b.className = "ev-opt";
-      b.innerHTML = bd.name + '<small>' + ({经济:"经济型",中档:"中档",高档:"高档"}[k]||k) + ' · ' + bd.cost + ' 万（现金 ' + fmt(S.cash) + ' 万）</small>';
-      b.onclick = ()=>{
-        if(S.cash < bd.cost){ addLog("现金不足 "+bd.cost+" 万，买不起"+bd.name); $("result-box").classList.add("hidden"); renderAll(); return; }
-        S.cash -= bd.cost; S.car = {brand:bd.name, cost:bd.cost};
-        addLog("购得"+bd.name+"（"+k+"档，"+bd.cost+" 万），通勤体面，资产账目清晰");
-        $("result-box").classList.add("hidden");
-        renderAll();
-      };
-      box.appendChild(b);
-    });
-    return;
-  }
-  if(key === "invest"){
-    const amount = 50;
-    if(S.cash < amount){ S.energy += a.cost; addLog("现金不足 "+amount+" 万，理财门槛 50 万起"); renderAll(); return; }
-    S.cash -= amount; S.invest += amount;
-    addLog("投入 "+amount+" 万购买稳健理财产品（理财本金累计 "+S.invest+" 万，每季度结算收益约2%±3%）");
-    renderAll(); return;
-  }
-  if(key === "donate"){
-    const amount = 10;
-    if(S.cash < amount){ S.energy += a.cost; addLog("现金不足 "+amount+" 万，捐赠下限 10 万"); renderAll(); return; }
-    S.cash -= amount;
-    S.rep = clamp(S.rep+3,0,100); S.intg = clamp(S.intg+1,0,100);
-    addLog("以个人名义捐资助学 "+amount+" 万，口碑+3 · 廉政+1（合法资产使用途径）");
-    renderAll(); return;
-  }
-  if(key === "wash"){
-    if(S.dirty <= 0){ addLog("账目往来本无异常，无需打理"); return; }
-    const fee = Math.round(S.dirty * CONFIG.washCostMult);
-    if(S.cash < fee){ S.energy += a.cost; addLog("现金不足 "+fee+" 万，洗白费用凑不齐"); return; }
-    S.cash -= fee;
-    addLog("请资深会计理顺账目，花 "+fee+" 万把可疑收入做成合法来源（理财收益/亲属赠与），账目清白，隐患消除");
-    S.dirty = 0;
-    renderAll(); return;
-  }
-  // ---- 升学考试 ----
+  // ---- 升学考试（资产操作走独立"资产管理"面板，不占季度精力）----
   if(key === "exam"){ startExam(); return; }
   // ---- 升学在读期间：学习备考 → 在职进修（推进在读进度）----
   if(key === "study" && S.studyStatus){
@@ -1328,7 +1377,7 @@ function doAction(key){
   let postMult = (CONFIG.postMods[S.postFocus]||{}).merit || 1.0;
   if(a.merit){
     const gain = a.merit * effMerit() * postMult * S.facMult * subBonus() * majorBonus();
-    S.merit += gain; S.lastYearMerit += gain;
+    addMerit(gain);
   }
   if(a.rep){ let g=a.rep + S.facRepBonus + ((CONFIG.postMods[S.postFocus]||{}).rep||0); S.rep = clamp(S.rep+g,0,100); }
   if(a.rel){ let g=a.rel + ((CONFIG.postMods[S.postFocus]||{}).rel||0); S.rel = clamp(S.rel+g,0,100); }
@@ -1395,7 +1444,7 @@ function doAction(key){
 function resolveEvent(ev, idx){
   const o = ev.opts[idx];
   const r = o.r || {};
-  if(r.merit){ const g=r.merit*effMerit()*((CONFIG.postMods[S.postFocus]||{}).merit||1)*S.facMult; S.merit+=g; S.lastYearMerit+=g; }
+  if(r.merit){ const g=r.merit*effMerit()*((CONFIG.postMods[S.postFocus]||{}).merit||1)*S.facMult; addMerit(g); }
   if(r.rep) S.rep = clamp(S.rep+r.rep+S.facRepBonus,0,100);
   if(r.rel) S.rel = clamp(S.rel+r.rel,0,100);
   if(r.intg) S.intg = clamp(S.intg+r.intg,0,100);
@@ -1431,7 +1480,7 @@ function resolveEvent(ev, idx){
     S.facMult = fm.meritMult||1.0; S.facRepBonus = fm.repBonus||0; S.facEduBonus = fm.eduBonus||0;
     // 加入派系即获得派系资源帮衬：一次性大幅政绩（派系给你对接项目、铺路搭桥）
     const facMerit = Math.round(150 * effMerit() * ((CONFIG.postMods[S.postFocus]||{}).merit||1) * S.facMult);
-    S.merit += facMerit; S.lastYearMerit += facMerit;
+    addMerit(facMerit);
     addLog("你接受了上级"+recruiter.name+"的邀请，加入"+fac+"——派系为你对接项目资源、铺路搭桥，政绩+"+facMerit+"（其系加成生效："+(fm.meritMult?"政绩×"+fm.meritMult:fm.repBonus?"口碑+4":fm.eduBonus?"学历+10":"")+"）");
   }
   if(r.accountability){
@@ -1526,7 +1575,7 @@ function settleEnergy(){
     const units = Math.floor(S.energy/5);
     const g = units * 2 * effMerit() * ((CONFIG.postMods[S.postFocus]||{}).merit||1) * S.facMult;
     if(g>0){
-      S.merit += g; S.lastYearMerit += g;
+      addMerit(g);
       addLog("剩余 "+S.energy+" 精力用于事务收尾与下沉调研（每5精力=2政绩），政绩+"+fmt(g));
     }
     S.energy = 0;
@@ -1609,7 +1658,7 @@ function yearEnd(){
     if(S.rank >= 7 && Math.random() < 0.30){
       S.majorCount++;
       const g = 300*CONFIG.effOf(S.rank);
-      S.merit += g; S.lastYearMerit += g;
+      addMerit(g);
       addLog("主持国家级重大工程/政策落地，国家级重大政绩+"+fmt(g)+"（累计"+S.majorCount+"次）");
     }
     // 弹性延迟期间健康衰减
