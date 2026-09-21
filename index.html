@@ -402,6 +402,7 @@ const CONFIG = {
       { t:"省农业农村厅副厅长（分管农业产业化）", focus:"农业" },
       { t:"省产业厅副厅长（分管工业经济）", focus:"产业" },
       { t:"省属高校副校长", focus:"教育", univ:true },
+      { t:"省教育厅副厅长（分管高等教育）", focus:"教育", eduLine:true },
       { t:"省委党校副校长", focus:"教育", needParty:true },
       { t:"市委副书记", focus:"党务" },
       { t:"市纪委书记", focus:"党务" }
@@ -410,7 +411,7 @@ const CONFIG = {
       { t:"市长", focus:"综合" },
       { t:"省农业农村厅厅长", focus:"农业" },
       { t:"省产业厅厅长", focus:"产业" },
-      { t:"省教育厅厅长", focus:"教育" },
+      { t:"省教育厅厅长", focus:"教育", eduLine:true },
       { t:"省公安厅厅长", focus:"执法" },
       { t:"省卫生健康委主任", focus:"民生" },
       { t:"省属高校校长", focus:"教育", univ:true },
@@ -426,6 +427,7 @@ const CONFIG = {
       { t:"部委副部长（执法监察）", focus:"执法" },
       { t:"部委副部长（民生保障）", focus:"民生" },
       { t:"部属重点高校校长", focus:"教育", univ:true },
+      { t:"教育部副部长（分管高等教育）", focus:"教育", eduLine:true },
       { t:"省委副书记", focus:"党务" },
       { t:"省委组织部部长", focus:"党务" }
     ]},
@@ -435,7 +437,8 @@ const CONFIG = {
       { t:"国务院部长（分管综合协调）", focus:"综合" },
       { t:"国务院部长（分管产业发展）", focus:"产业" },
       { t:"国务院部长（分管农业农村）", focus:"农业" },
-      { t:"国务院部长（分管教育科技）", focus:"教育" },
+      { t:"国务院部长（分管教育科技）", focus:"教育", eduLine:true },
+      { t:"教育部部长", focus:"教育", eduLine:true },
       { t:"国务院部长（分管执法监管）", focus:"执法" },
       { t:"中央组织部部长", focus:"党务" },
       { t:"中央统战部部长", focus:"党务" }
@@ -443,6 +446,7 @@ const CONFIG = {
     { name:"副国级", level:"副国级", posts:[
       { t:"国务院副总理（分管经济）", focus:"专项" },
       { t:"国务院副总理（分管农业农村）", focus:"专项" },
+      { t:"国务院副总理（分管教育科技）", focus:"专项", eduLine:true },
       { t:"国务委员（专项）", focus:"专项" },
       { t:"全国人大常委会副委员长", focus:"专项" },
       { t:"全国政协副主席", focus:"专项" },
@@ -462,6 +466,12 @@ const CONFIG = {
       { t:"中华人民共和国主席（国家元首）", focus:"专项" }
     ]}
   ],
+
+  // 高校事业单位序列：独立职级（职称）链——不走公务员职级称谓；对应公务员职级仅作待遇对照
+  univRankName: {
+    0:"初级（助教）", 1:"中级（讲师）", 2:"副高级（副教授）", 3:"正高级（教授）",
+    4:"正高级（教授·管理岗）", 5:"副厅级（教授·校领导）", 6:"正厅级（教授·校长）", 7:"副部级（部属高校）"
+  },
 
   // 岗位加成：领域 → 加成描述与数值
   postMods: {
@@ -497,14 +507,22 @@ const CONFIG = {
 
   // 岗位的领域直接挂在岗位对象上（见 ranks 定义），postFocus 由岗位决定
 
-  // 选岗：从当前职级岗位池随机抽 3 个候选；党务岗（党政路线）需党校经历解锁；党校教师岗（needParty）需党校≥1期；高校岗（univ）为事业单位序列
+  // 选岗：从当前职级岗位池随机抽 3 个候选；党务岗（党政路线）需党校经历解锁；党校教师岗（needParty）需党校≥1期；高校岗（univ）为事业单位序列、需本科学历起步（本科 edu≥60）
+  // 教育线延续：当前在高校线（univ）时，高校/教育系统岗（univ|eduLine）优先出现 2 个，确保高校线可一路延续至教育厅/教育部/总理/主席
   pickPosts: function(rank){
     const pool = CONFIG.ranks[rank].posts.slice();
     const partyPool = pool.filter(p=>p.focus==="党务");
-    const adminPool = pool.filter(p=>p.focus!=="党务" && !(p.needParty && (!S || S.dangxiao<4)));
+    const adminPool = pool.filter(p=>p.focus!=="党务" && !(p.needParty && (!S || S.dangxiao<4)) && !(p.univ && (!S || S.edu<60)));
     const shuffle = arr => { const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
     let chosen;
-    if(S && S.path==="党政"){
+    if(S && (S.postUniv || S.postEdu)){
+      // 高校线：教育线岗（高校/教育厅/教育部）保底进候选，其余用行政岗补足 3 个
+      const edu = shuffle(adminPool.filter(p=>p.univ||p.eduLine)).slice(0,2);
+      const adm = shuffle(adminPool.filter(p=>!(p.univ||p.eduLine))).slice(0,3);
+      const chosen3 = edu.slice();
+      while(chosen3.length<3 && adm.length) chosen3.push(adm.pop());
+      chosen = shuffle(chosen3);
+    } else if(S && S.path==="党政"){
       // 党政路线：党务岗优先出现（2 党务 + 1 行政，混排）
       const part = shuffle(partyPool).slice(0,2);
       const adm = shuffle(adminPool).slice(0,1);
@@ -726,6 +744,7 @@ function newState(name, cat, faction, eduBg, postFocus){
   if(postIdx<0) postIdx = 0;
   const pf = basePosts[postIdx].focus;
   const postTitle = basePosts[postIdx].t;
+  const postUniv = !!basePosts[postIdx].univ;   // 高校事业单位序列（独立职级/独立人脉圈）
   const baseSalary = CONFIG.salaryBase[eduMap.rank] || CONFIG.salaryBase[0];
   return {
     name, cat, faction, eduBg: eduMap.note,
@@ -744,7 +763,7 @@ function newState(name, cat, faction, eduBg, postFocus){
     dangxiao:0,                                      // 党校期数（4次学习=1期）
     violation:false,                                 // 违纪记录（双开判定）
     investigation:false,                             // 立案审查中
-    postFocus:pf, postIdx:postIdx, postTitle:postTitle,
+    postFocus:pf, postIdx:postIdx, postTitle:postTitle, postUniv:postUniv, postEdu:postUniv,
     career:[{ title:postTitle, focus:pf, startYear:1, startAge:CONFIG.startAge, years:0, reason:"入职定级" }],  // 个人履历：历任岗位/年限/晋升原因
     lastPromoReason:"组织提拔",                       // 最近一次晋升的原因（用于履历记录）
     cash:0, house:0, houses:[], car:null, dirty:0, wealthChecks:0, invest:0, // 资产：现金(万)/房产套数/房产明细/车{品牌,价}/不明资产/被查次数/理财本金
@@ -775,6 +794,18 @@ const NPC_TEMPLATES = {
   10:{ bosses:[{t:"中华人民共和国主席"}], peers:[{t:"国务院总理"},{t:"全国人大常委会委员长"},{t:"全国政协主席"}], subs:[{t:"国务院副总理"},{t:"国家副主席"},{t:"国务委员"}] },
   11:{ bosses:[], peers:[{t:"全国人民代表大会（国家权力机关）"}], subs:[{t:"国务院总理"},{t:"全国人大常委会委员长"},{t:"全国政协主席"}] }
 };
+// 高校事业单位序列人脉圈：上级/同级/下属全部为高校内部职务（不走镇长/书记等公务员职务）
+const UNIV_NPC_TEMPLATES = {
+  0:{ bosses:[{t:"二级学院院长"},{t:"系主任"}], peers:[{t:"高校讲师"},{t:"高校助教"},{t:"二级学院行政秘书"}], subs:[] },
+  1:{ bosses:[{t:"二级学院院长"},{t:"分管学生工作副院长"}], peers:[{t:"高校团委书记"},{t:"二级学院办公室主任"},{t:"高校辅导员"}], subs:[{t:"学生工作干事"},{t:"班级辅导员"},{t:"行政办干事"}] },
+  2:{ bosses:[{t:"高校校长"},{t:"分管副校长"}], peers:[{t:"二级学院副院长（教学）"},{t:"二级学院党委副书记"},{t:"高校科研处副处长"}], subs:[{t:"学工办主任"},{t:"系主任"},{t:"教研室主任"}] },
+  3:{ bosses:[{t:"高校校长"},{t:"分管副校长"}], peers:[{t:"二级学院院长（兄弟学院）"},{t:"高校教务处处长"},{t:"高校人事处处长"}], subs:[{t:"二级学院副院长"},{t:"系主任"},{t:"教学秘书"}] },
+  4:{ bosses:[{t:"高校校长"},{t:"分管副校长"}], peers:[{t:"二级学院院长"},{t:"高校人事处处长"},{t:"高校科研处处长"}], subs:[{t:"教务处副处长"},{t:"教务科科长"},{t:"教学管理干事"}] },
+  5:{ bosses:[{t:"高校校长"},{t:"高校党委书记"}], peers:[{t:"高校副校长（兄弟）"},{t:"省教育厅副厅长"},{t:"高校党委副书记"}], subs:[{t:"高校教务处处长"},{t:"二级学院院长"},{t:"高校人事处处长"}] },
+  6:{ bosses:[{t:"省教育厅厅长"},{t:"省委教育工委书记"}], peers:[{t:"省属高校校长（兄弟院校）"},{t:"省教育厅副厅长"},{t:"省科技厅副厅长"}], subs:[{t:"高校副校长"},{t:"高校教务处处长"},{t:"二级学院院长"}] },
+  7:{ bosses:[{t:"教育部部长（国务院部长）"}], peers:[{t:"部属高校校长（兄弟院校）"},{t:"教育部副部长"},{t:"高校党委书记"}], subs:[{t:"高校副校长"},{t:"高校教务处处长"},{t:"二级学院院长"}] }
+};
+function npcTemplates(){ return S && S.postUniv ? UNIV_NPC_TEMPLATES : NPC_TEMPLATES; }
 function pickFaction(){
   const r = Math.random();
   return r<0.34 ? "实干派" : r<0.67 ? "民生派" : r<0.85 ? "学术派" : null;
@@ -803,22 +834,22 @@ function npcUsedSet(){
   return used;
 }
 function makeBossNpc(rank){
-  const T = NPC_TEMPLATES[Math.min(11,rank)].bosses;
+  const T = npcTemplates()[Math.min(11,rank)].bosses;
   const t = T[Math.floor(Math.random()*T.length)];
   return makeNpc(pickName(npcUsedSet()), t.t, 40+Math.floor(Math.random()*10), 68+Math.floor(Math.random()*17), pickFaction());
 }
 function makePeerNpc(rank){
-  const T = NPC_TEMPLATES[Math.min(11,rank)].peers;
+  const T = npcTemplates()[Math.min(11,rank)].peers;
   const t = T[Math.floor(Math.random()*T.length)];
   return makeNpc(pickName(npcUsedSet()), t.t, 45+Math.floor(Math.random()*8), 60+Math.floor(Math.random()*21));
 }
 function makeSubNpc(rank){
-  const T = NPC_TEMPLATES[Math.min(11,rank)].subs;
+  const T = npcTemplates()[Math.min(11,rank)].subs;
   const t = T[Math.floor(Math.random()*T.length)];
   return makeNpc(pickName(npcUsedSet()), t.t, 45+Math.floor(Math.random()*8), 40+Math.floor(Math.random()*26));
 }
 function genNpcs(rank){
-  const T = NPC_TEMPLATES[Math.min(11,rank)];
+  const T = npcTemplates()[Math.min(11,rank)];
   const used = new Set();   // 同批名字去重：全名/姓/尾字全局唯一
   const mk = (titleList, favLo, favHi, abLo, abHi, facFn) => titleList.map(t=>{
     const name = pickName(used);
@@ -860,6 +891,14 @@ function evalSupport(){
 /* ================= 渲染 ================= */
 const $ = id => document.getElementById(id);
 
+// 当前职级显示名：高校事业单位序列走高校职称链（助教→教授），公务员序列按公务员职级
+function curRankLabel(){
+  if(!S) return "";
+  return S.postUniv
+    ? ((CONFIG.univRankName[S.rank]||CONFIG.ranks[S.rank].name) + "（待遇" + CONFIG.ranks[S.rank].name + "）")
+    : (CONFIG.ranks[S.rank].name + (CONFIG.ranks[S.rank].level ? " · " + CONFIG.ranks[S.rank].level : ""));
+}
+
 function renderHeader(){
   $("post-name").textContent = S.postTitle + "（" + CONFIG.platformOf(S.rank) + "）";
   $("post-meta").textContent = "第 "+S.year+" 年 · 第 "+S.quarter+" 季度 · 在职"+S.yearsInRank+"年";
@@ -872,7 +911,8 @@ function renderStats(){
   $("p-name").textContent = S.name;
   $("p-age").textContent = S.age + " 岁";
   $("p-cat").textContent = S.cat + "类";
-  $("p-rank").textContent = CONFIG.ranks[S.rank].name + (CONFIG.ranks[S.rank].level ? " · " + CONFIG.ranks[S.rank].level : "");
+  // 高校事业单位序列：职级用高校职称链显示（如 助教/讲师/副教授/教授），公务员职级仅作待遇对照
+  $("p-rank").textContent = curRankLabel();
   $("p-faction").innerHTML = '<span class="faction-tag'+(S.faction==="中立"?" mid":"")+'">'+S.faction+'</span>';
   $("p-exploit").textContent = S.exploit + " 次" + (S.majorExploit>0 ? " · 重大立功 " + S.majorExploit + " 次" : "");
   $("v-edu").textContent = fmt(S.edu) + "（" + eduLevel(S.edu) + "）";
@@ -1056,13 +1096,13 @@ function renderPostSelect(rank){
     const p = candidates[i];
     const mod = CONFIG.postMods[p.focus] || CONFIG.postMods["综合"];
     const fm = (S.focusMerit && S.focusMerit[p.focus]!==undefined) ? fmt(S.focusMerit[p.focus]) : 0;
-    const tag = p.univ ? '<span class="pc-tag">事业单位·高校</span>' : p.needParty ? '<span class="pc-tag">党校系统</span>' : p.focus==="党务" ? '<span class="pc-tag">党务</span>' : "";
+    const tag = p.univ ? '<span class="pc-tag">事业单位·高校</span>' : p.eduLine ? '<span class="pc-tag">教育系统·行政线</span>' : p.needParty ? '<span class="pc-tag">党校系统</span>' : p.focus==="党务" ? '<span class="pc-tag">党务</span>' : "";
     cards += '<div class="post-card" data-idx="'+i+'"><div class="pc-name">'+p.t+' '+tag+'</div>'+
       '<div class="pc-focus">类别：'+p.focus+' · 你在该方向已积累政绩 '+fm+'</div><div class="pc-bonus">'+mod.note+'</div></div>';
   }
   box.innerHTML = '<div class="r-title up">✦ 组织考察通过 · 岗位选择</div>'+
     '<div class="result-line">晋升职级：'+CONFIG.ranks[rank].name+(CONFIG.ranks[rank].level?'（'+CONFIG.ranks[rank].level+'）':'')+' · 民主测评支持率 <b>'+fmt(S.lastSupport)+'%</b>（门槛 '+CONFIG.promote[rank-1].eval+'%）· 实绩核查通过 · 组织谈话顺利</div>'+
-    '<div class="result-line" style="color:var(--sub);">组织从备选岗位库中推荐以下 3 个岗位，请选择赴任（岗位类别影响产出与人脉；党务岗需党校经历，你已完成 '+S.dangxiao+' 期党校培训'+(S.path==="党政"?"，当前在党政路线":"")+'；含高校事业单位岗与党校系统岗，可走教育/党政线）</div>'+
+    '<div class="result-line" style="color:var(--sub);">组织从备选岗位库中推荐以下 3 个岗位，请选择赴任（岗位类别影响产出与人脉；党务岗需党校经历，你已完成 '+S.dangxiao+' 期党校培训'+(S.path==="党政"?"，当前在党政路线":"")+'；高校岗需本科学历起步、走高校职级链（助教→教授），党校系统岗需党校≥1期，可走教育/党政线）</div>'+
     cards;
   box.querySelectorAll(".post-card").forEach(c=>{
     c.onclick = ()=>{ applyPost(parseInt(c.dataset.idx)); };
@@ -1076,7 +1116,14 @@ function applyPost(idx){
   S.postTitle = p.t;
   S.postIdx = CONFIG.ranks[S.rank].posts.findIndex(x=>x.t===p.t);
   if(S.postIdx<0) S.postIdx = 0;
-  if(p.univ) addLog("任职高校（事业单位）岗位——走事业单位序列，仍是公务员身份（参照公务员法管理），学历积累有加成");
+  if(p.univ){
+    S.postUniv = true;
+    addLog("任职高校（事业单位）岗位——走高校事业单位序列，职级按职称链（助教→讲师→副教授→教授）计，人脉圈为高校班子；仍是公务员身份（参照公务员法管理），学历积累有加成");
+  } else {
+    S.postUniv = false;
+  }
+  S.postEdu = !!(p.univ || p.eduLine);   // 教育线延续：高校/教育系统岗一路优先出候选，可直达国务院总理、国家主席
+  if(p.eduLine) addLog("任职教育系统行政岗位——高校线延续至教育系统（教育厅/教育部），职级按公务员序列计，向上可直达国务院总理、国家主席");
   // 党务岗 → 转入党政路线（行动集切换）；行政岗 → 回归行政路线
   if(p.focus === "党务"){
     const was = S.path;
@@ -1207,7 +1254,7 @@ function renderFinal(){
   box.classList.remove("hidden");
   $("result-box").classList.add("hidden");
   $("event-box").classList.add("hidden");
-  const final = CONFIG.ranks[S.rank].name;
+  const final = curRankLabel();
   const tip = S.rank>=10 ? "国家元首，最高荣誉" : S.rank>=9 ? "正国级，国之重器" : S.rank>=7 ? "位高权重，功成名就" : S.rank>=5 ? "一方大员，实属栋梁" : S.rank>=3 ? "勤恳为民，问心无愧" : S.rank>=1 ? "守土尽责，初心未改" : "岁月静好，平凡亦是本真";
   const exitHtml = S.exitReason ? '<div class="exit-reason">退出说明：'+S.exitReason+'</div>' : "";
   // 个人履历：结算最后一段任职年限
@@ -1487,7 +1534,7 @@ function resolveEvent(ev, idx){
     // 问责免职：合理退出路径——降一级，继续履职
     if(S.rank>0){
       S.rank--; S.yearsInRank = 0;
-      addLog("问责处理：因重大事故处置失当被免职，职级降为"+CONFIG.ranks[S.rank].name+"（有因可溯，非随机）");
+      addLog("问责处理：因重大事故处置失当被免职，职级降为"+curRankLabel()+"（有因可溯，非随机）");
     }
   }
   addLog("事件『"+ev.title+"』：选择了『"+o.t+"』（"+o.note+"）");
@@ -1641,7 +1688,7 @@ function yearEnd(){
   renderResult(title, lines, "进入下一年", ()=>{
     if(gradeIsBad3){
       // 连续3年不称职 → 调整岗位（降一级）
-      if(S.rank>0){ S.rank--; S.yearsInRank=0; addLog("连续三年考核不称职，依规调整岗位，职级降为"+CONFIG.ranks[S.rank].name+"（有预警，可预防）"); }
+      if(S.rank>0){ S.rank--; S.yearsInRank=0; addLog("连续三年考核不称职，依规调整岗位，职级降为"+curRankLabel()+"（有预警，可预防）"); }
       else { addLog("连续三年考核不称职，依规调整岗位（职级已最低，予以告诫）"); }
     }
     S.year++;
@@ -1752,9 +1799,9 @@ $("btn-start").onclick = function(){
   $("start-box").classList.add("hidden");
   $("game").classList.remove("hidden");
   addLog("入职 "+(cat==="综合"?"综合管理类":cat==="行政"?"行政执法类":"专业技术类")+"；学历定级："+S.eduBg+"（学历"+fmt(S.edu)+"，"+eduLevel(S.edu)+"）——职级起点按学历定，职务从基层干起");
-  addLog("入职职务岗位："+S.postTitle+"（"+S.postFocus+"类）——职级待遇"+CONFIG.ranks[S.rank].name+(CONFIG.ranks[S.rank].level?"（"+CONFIG.ranks[S.rank].level+"）":"")+"，职务仍是基层办所岗位，领导职务等组织提拔");
+  addLog("入职职务岗位："+S.postTitle+"（"+S.postFocus+"类）——职级待遇"+CONFIG.ranks[S.rank].name+(CONFIG.ranks[S.rank].level?"（"+CONFIG.ranks[S.rank].level+"）":"")+(S.postUniv?"，高校事业单位序列按职称链计（助教→讲师→副教授→教授）":"")+"，职务仍是基层办所岗位，领导职务等组织提拔");
   addLog("立场："+fac+(fac==="中立"?"（中立观望，谁都不得罪；上级认可后可能拉拢你入派系）":"（派系争斗中的立场选择）"));
-  addLog("试用期转正，担任"+CONFIG.ranks[S.rank].name+"，从今天开始你的仕途");
+  addLog("试用期转正，担任"+curRankLabel()+"，从今天开始你的仕途");
   renderAll();
 };
 
@@ -1775,9 +1822,12 @@ document.querySelectorAll(".edu-btn").forEach(b=>{
 function renderPostRow(){
   // 入职职务岗位统一为基层办所岗位（rank0）——学历只决定职级待遇，职务从基层干起
   // 且岗位类别受入职方向限定（综合管理类不出执法/技术岗，行政执法类只出执法岗，专业技术类出技术岗）
+  // 高校岗（事业单位）需本科学历起步：大专学历不出现高校科任教师
   const cat = document.querySelector(".cat-btn.sel") ? document.querySelector(".cat-btn.sel").dataset.cat : "综合";
+  const eduBtn = document.querySelector(".edu-btn.sel");
+  const eduVal = { dazhuan:40, benke:60, shuoshi:80, boshi:100 }[eduBtn ? eduBtn.dataset.edu : "dazhuan"] || 40;
   const allowed = CONFIG.catPosts[cat] || CONFIG.catPosts["综合"];
-  const posts = CONFIG.ranks[0].posts.filter(p=>allowed.includes(p.focus));
+  const posts = CONFIG.ranks[0].posts.filter(p=>allowed.includes(p.focus) && !(p.univ && eduVal<60));
   const box = $("post-row");
   box.innerHTML = "";
   posts.forEach((p,i)=>{
